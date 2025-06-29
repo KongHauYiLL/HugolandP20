@@ -230,7 +230,7 @@ export const useGameState = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Garden growth timer
+  // Garden growth and water consumption
   useEffect(() => {
     const interval = setInterval(() => {
       setGameState(prev => {
@@ -241,22 +241,23 @@ export const useGameState = () => {
         const now = new Date();
         const lastUpdate = new Date(prev.gardenOfGrowth.lastWatered || prev.gardenOfGrowth.plantedAt || now);
         const hoursPassed = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
-        
-        if (hoursPassed >= 1) { // Grow every hour
-          const newGrowthCm = Math.min(
-            prev.gardenOfGrowth.growthCm + 0.5, // 0.5cm per hour
+
+        if (hoursPassed >= 1) {
+          const newWaterHours = Math.max(0, prev.gardenOfGrowth.waterHoursRemaining - hoursPassed);
+          const growthRate = 0.5; // 0.5cm per hour
+          const newGrowth = Math.min(
+            prev.gardenOfGrowth.growthCm + (hoursPassed * growthRate),
             prev.gardenOfGrowth.maxGrowthCm
           );
-          const newWaterHours = Math.max(0, prev.gardenOfGrowth.waterHoursRemaining - hoursPassed);
-          const newGrowthBonus = newGrowthCm * 5; // 5% per cm
+          const newBonus = newGrowth * 5; // 5% bonus per cm
 
           return {
             ...prev,
             gardenOfGrowth: {
               ...prev.gardenOfGrowth,
-              growthCm: newGrowthCm,
-              totalGrowthBonus: newGrowthBonus,
               waterHoursRemaining: newWaterHours,
+              growthCm: newGrowth,
+              totalGrowthBonus: newBonus,
               lastWatered: now,
             },
           };
@@ -688,8 +689,8 @@ export const useGameState = () => {
       const defResearchBonus = calculateResearchBonus(prev.research.def.level);
       const hpResearchBonus = calculateResearchBonus(prev.research.hp.level);
 
-      // Add garden bonus
-      const gardenBonus = prev.gardenOfGrowth.totalGrowthBonus / 100;
+      // Add garden bonuses
+      const gardenBonus = prev.gardenOfGrowth.totalGrowthBonus / 100; // Convert percentage to multiplier
 
       let atkMultiplier = 1 + (atkResearchBonus / 100) + gardenBonus;
       let defMultiplier = 1 + (defResearchBonus / 100) + gardenBonus;
@@ -724,6 +725,60 @@ export const useGameState = () => {
         },
       };
     });
+  }, []);
+
+  const plantSeed = useCallback((): boolean => {
+    setGameState(prev => {
+      if (prev.gardenOfGrowth.isPlanted || prev.coins < prev.gardenOfGrowth.seedCost) {
+        return prev;
+      }
+
+      const now = new Date();
+      return {
+        ...prev,
+        coins: prev.coins - prev.gardenOfGrowth.seedCost,
+        gardenOfGrowth: {
+          ...prev.gardenOfGrowth,
+          isPlanted: true,
+          plantedAt: now,
+          lastWatered: now,
+          waterHoursRemaining: 24, // Start with 24 hours of water
+        },
+      };
+    });
+
+    return true;
+  }, []);
+
+  const buyWater = useCallback((hours: number): boolean => {
+    setGameState(prev => {
+      const cost = (hours / 24) * prev.gardenOfGrowth.waterCost;
+      if (prev.coins < cost) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        coins: prev.coins - cost,
+        gardenOfGrowth: {
+          ...prev.gardenOfGrowth,
+          waterHoursRemaining: prev.gardenOfGrowth.waterHoursRemaining + hours,
+          lastWatered: new Date(),
+        },
+      };
+    });
+
+    return true;
+  }, []);
+
+  const updateSettings = useCallback((newSettings: Partial<GameSettings>) => {
+    setGameState(prev => ({
+      ...prev,
+      settings: {
+        ...prev.settings,
+        ...newSettings,
+      },
+    }));
   }, []);
 
   const setGameMode = useCallback((mode: 'normal' | 'blitz' | 'bloodlust' | 'crazy' | 'survival' | 'timeAttack' | 'boss') => {
@@ -967,69 +1022,6 @@ export const useGameState = () => {
     updatePlayerStats();
   }, [updatePlayerStats]);
 
-  const plantSeed = useCallback((): boolean => {
-    setGameState(prev => {
-      if (prev.gardenOfGrowth.isPlanted || prev.coins < prev.gardenOfGrowth.seedCost) {
-        return prev;
-      }
-
-      const now = new Date();
-
-      return {
-        ...prev,
-        coins: prev.coins - prev.gardenOfGrowth.seedCost,
-        gardenOfGrowth: {
-          ...prev.gardenOfGrowth,
-          isPlanted: true,
-          plantedAt: now,
-          lastWatered: now,
-          waterHoursRemaining: 24, // Start with 24 hours of water
-        },
-      };
-    });
-
-    return true;
-  }, []);
-
-  const buyWater = useCallback((hours: number): boolean => {
-    const waterCosts = {
-      24: 1000,
-      72: 2800,
-      168: 6500,
-      720: 25000
-    };
-
-    const cost = waterCosts[hours as keyof typeof waterCosts] || 1000;
-
-    setGameState(prev => {
-      if (!prev.gardenOfGrowth.isPlanted || prev.coins < cost) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        coins: prev.coins - cost,
-        gardenOfGrowth: {
-          ...prev.gardenOfGrowth,
-          waterHoursRemaining: prev.gardenOfGrowth.waterHoursRemaining + hours,
-          lastWatered: new Date(),
-        },
-      };
-    });
-
-    return true;
-  }, []);
-
-  const updateSettings = useCallback((newSettings: Partial<GameSettings>) => {
-    setGameState(prev => ({
-      ...prev,
-      settings: {
-        ...prev.settings,
-        ...newSettings,
-      },
-    }));
-  }, []);
-
   const discardItem = useCallback((itemId: string, type: 'weapon' | 'armor') => {
     setGameState(prev => ({
       ...prev,
@@ -1099,6 +1091,10 @@ export const useGameState = () => {
           ...prev.inventory,
           relics: updatedRelics,
           equippedRelics: updatedEquippedRelics,
+        },
+        statistics: {
+          ...prev.statistics,
+          itemsUpgraded: prev.statistics.itemsUpgraded + 1,
         },
       };
     });
