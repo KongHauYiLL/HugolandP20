@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Enemy, CombatState } from '../types/game';
-import { Sword, Shield, Heart, Brain, Clock, Zap, Skull, Flame, Target } from 'lucide-react';
+import { Enemy } from '../types/game';
+import { Sword, Shield, Heart, Brain, Clock, Zap, Skull, Flame } from 'lucide-react';
 import { TriviaQuestion, getQuestionByZone, checkAnswer } from '../utils/triviaQuestions';
 
 interface CombatProps {
@@ -11,9 +11,7 @@ interface CombatProps {
     atk: number;
     def: number;
   };
-  combatState: CombatState;
   onAttack: (hit: boolean, category?: string) => void;
-  onDodge: (successful: boolean) => void;
   combatLog: string[];
   gameMode: {
     current: 'normal' | 'blitz' | 'bloodlust' | 'crazy';
@@ -31,9 +29,7 @@ interface CombatProps {
 export const Combat: React.FC<CombatProps> = ({ 
   enemy, 
   playerStats, 
-  combatState,
   onAttack, 
-  onDodge,
   combatLog, 
   gameMode,
   knowledgeStreak
@@ -45,24 +41,21 @@ export const Combat: React.FC<CombatProps> = ({
   const [timeLeft, setTimeLeft] = useState(5);
   const [showResult, setShowResult] = useState(false);
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
-  const [dodgeTimeLeft, setDodgeTimeLeft] = useState(0);
 
   const questionTime = (gameMode.current === 'blitz' || gameMode.current === 'bloodlust') ? 3 : 5;
 
   useEffect(() => {
-    if (combatState.playerTurn && !currentQuestion) {
-      const question = getQuestionByZone(enemy.zone);
-      setCurrentQuestion(question);
-      setSelectedAnswer(null);
-      setTypedAnswer('');
-      setTimeLeft(questionTime);
-      setShowResult(false);
-      setLastAnswerCorrect(null);
-    }
-  }, [combatState.playerTurn, enemy.zone, questionTime, currentQuestion]);
+    const question = getQuestionByZone(enemy.zone);
+    setCurrentQuestion(question);
+    setSelectedAnswer(null);
+    setTypedAnswer('');
+    setTimeLeft(questionTime);
+    setShowResult(false);
+    setLastAnswerCorrect(null);
+  }, [enemy, questionTime]);
 
   useEffect(() => {
-    if (!currentQuestion || isAnswering || showResult || !combatState.playerTurn) return;
+    if (!currentQuestion || isAnswering || showResult) return;
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -75,27 +68,10 @@ export const Combat: React.FC<CombatProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [currentQuestion, isAnswering, showResult, combatState.playerTurn]);
-
-  // Dodge timer
-  useEffect(() => {
-    if (combatState.dodgeWindowActive) {
-      const timer = setInterval(() => {
-        setDodgeTimeLeft(prev => Math.max(0, prev - 100));
-      }, 100);
-
-      if (combatState.dodgeButtonReady) {
-        setDodgeTimeLeft(500);
-      } else {
-        setDodgeTimeLeft(2500);
-      }
-
-      return () => clearInterval(timer);
-    }
-  }, [combatState.dodgeWindowActive, combatState.dodgeButtonReady]);
+  }, [currentQuestion, isAnswering, showResult]);
 
   const handleAnswer = (answerIndex: number | null) => {
-    if (isAnswering || !currentQuestion || !combatState.playerTurn) return;
+    if (isAnswering || !currentQuestion) return;
 
     setIsAnswering(true);
     
@@ -114,7 +90,8 @@ export const Combat: React.FC<CombatProps> = ({
     setTimeout(() => {
       onAttack(isCorrect, currentQuestion.category);
       
-      setCurrentQuestion(null);
+      const newQuestion = getQuestionByZone(enemy.zone);
+      setCurrentQuestion(newQuestion);
       setSelectedAnswer(null);
       setTypedAnswer('');
       setIsAnswering(false);
@@ -122,14 +99,6 @@ export const Combat: React.FC<CombatProps> = ({
       setShowResult(false);
       setLastAnswerCorrect(null);
     }, 2000);
-  };
-
-  const handleDodgeClick = () => {
-    if (combatState.dodgeButtonReady && combatState.enemyAttackPending) {
-      onDodge(true);
-    } else if (combatState.enemyAttackPending) {
-      onDodge(false);
-    }
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -168,6 +137,17 @@ export const Combat: React.FC<CombatProps> = ({
     }
   };
 
+  if (!currentQuestion) {
+    return (
+      <div className="bg-gradient-to-br from-red-900 via-purple-900 to-black p-3 sm:p-6 rounded-lg shadow-2xl">
+        <div className="text-center py-8">
+          <div className="animate-spin inline-block w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full mb-4"></div>
+          <p className="text-white text-lg">Loading question...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gradient-to-br from-red-900 via-purple-900 to-black p-3 sm:p-6 rounded-lg shadow-2xl">
       <div className="text-center mb-4 sm:mb-6">
@@ -189,24 +169,6 @@ export const Combat: React.FC<CombatProps> = ({
             </span>
           )}
         </div>
-
-        {/* Enemy Abilities */}
-        {enemy.abilities.length > 0 && (
-          <div className="mt-3 bg-black/30 p-3 rounded-lg">
-            <h4 className="text-white font-semibold text-sm mb-2">Enemy Abilities:</h4>
-            <div className="flex flex-wrap gap-2 justify-center">
-              {enemy.abilities.map((ability, index) => (
-                <div
-                  key={index}
-                  className="bg-red-900/50 px-2 py-1 rounded text-xs text-red-300 border border-red-500/30"
-                  title={ability.description}
-                >
-                  {ability.icon} {ability.name}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Health Bars */}
@@ -260,175 +222,135 @@ export const Combat: React.FC<CombatProps> = ({
         </div>
       </div>
 
-      {/* Combat Phase Display */}
-      <div className="text-center mb-4">
-        {combatState.playerTurn ? (
-          <div className="bg-green-900/30 p-3 rounded-lg border border-green-500/50">
-            <h3 className="text-green-400 font-bold">Your Turn - Answer the Question!</h3>
+      {/* Trivia Question Section */}
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
+            <h3 className="text-white font-semibold text-sm sm:text-base">Knowledge Challenge</h3>
           </div>
-        ) : combatState.enemyAttackPending ? (
-          <div className="bg-red-900/30 p-3 rounded-lg border border-red-500/50">
-            <h3 className="text-red-400 font-bold">Enemy's Turn - Prepare to Dodge!</h3>
-            {combatState.dodgeWindowActive && (
-              <div className="mt-2">
-                <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
-                  <div 
-                    className="bg-gradient-to-r from-red-500 to-yellow-500 h-2 rounded-full transition-all duration-100"
-                    style={{ width: `${(dodgeTimeLeft / (combatState.dodgeButtonReady ? 500 : 2500)) * 100}%` }}
-                  />
-                </div>
-                <button
-                  onClick={handleDodgeClick}
-                  className={`w-full py-3 rounded-lg font-bold text-white transition-all duration-200 ${
-                    combatState.dodgeButtonReady
-                      ? 'bg-green-600 hover:bg-green-500 animate-pulse'
-                      : 'bg-red-600 cursor-not-allowed'
-                  }`}
-                >
-                  <Target className="w-5 h-5 inline mr-2" />
-                  {combatState.dodgeButtonReady ? 'DODGE NOW!' : 'Wait for green...'}
-                </button>
-              </div>
-            )}
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
+            <span className={`font-bold text-sm sm:text-base ${
+              timeLeft <= 2 ? 'text-red-400 animate-pulse' : 'text-yellow-400'
+            }`}>
+              {timeLeft}s
+            </span>
           </div>
-        ) : (
-          <div className="bg-blue-900/30 p-3 rounded-lg border border-blue-500/50">
-            <h3 className="text-blue-400 font-bold">Processing Turn...</h3>
-          </div>
-        )}
-      </div>
+        </div>
 
-      {/* Trivia Question Section - Only show during player turn */}
-      {combatState.playerTurn && currentQuestion && (
-        <div className="mb-4 sm:mb-6">
-          <div className="flex items-center justify-between mb-4">
+        {/* Question Card */}
+        <div className={`bg-black/40 p-4 sm:p-6 rounded-lg border-2 ${getDifficultyBorder(currentQuestion.difficulty)} mb-4`}>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs sm:text-sm text-gray-400">{currentQuestion.category}</span>
             <div className="flex items-center gap-2">
-              <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
-              <h3 className="text-white font-semibold text-sm sm:text-base">Knowledge Challenge</h3>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
-              <span className={`font-bold text-sm sm:text-base ${
-                timeLeft <= 2 ? 'text-red-400 animate-pulse' : 'text-yellow-400'
-              }`}>
-                {timeLeft}s
+              <span className={`text-xs sm:text-sm font-semibold ${getDifficultyColor(currentQuestion.difficulty)}`}>
+                {currentQuestion.difficulty.toUpperCase()}
+              </span>
+              <span className="text-xs text-purple-400">
+                {currentQuestion.type === 'multiple-choice' ? 'Multiple Choice' : 'Type Answer'}
               </span>
             </div>
           </div>
+          <p className="text-white font-semibold text-sm sm:text-lg mb-4 leading-relaxed">
+            {currentQuestion.question}
+          </p>
 
-          {/* Question Card */}
-          <div className={`bg-black/40 p-4 sm:p-6 rounded-lg border-2 ${getDifficultyBorder(currentQuestion.difficulty)} mb-4`}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs sm:text-sm text-gray-400">{currentQuestion.category}</span>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs sm:text-sm font-semibold ${getDifficultyColor(currentQuestion.difficulty)}`}>
-                  {currentQuestion.difficulty.toUpperCase()}
-                </span>
-                <span className="text-xs text-purple-400">
-                  {currentQuestion.type === 'multiple-choice' ? 'Multiple Choice' : 'Type Answer'}
-                </span>
-              </div>
+          {/* Answer Input */}
+          {currentQuestion.type === 'multiple-choice' ? (
+            <div className="grid grid-cols-1 gap-2 sm:gap-3">
+              {currentQuestion.options?.map((option, index) => {
+                let buttonClass = 'bg-gray-700 hover:bg-gray-600 text-white';
+                
+                if (showResult) {
+                  if (index === currentQuestion.correctAnswer) {
+                    buttonClass = 'bg-green-600 text-white';
+                  } else if (index === selectedAnswer && selectedAnswer !== currentQuestion.correctAnswer) {
+                    buttonClass = 'bg-red-600 text-white';
+                  } else {
+                    buttonClass = 'bg-gray-600 text-gray-400';
+                  }
+                } else if (selectedAnswer === index) {
+                  buttonClass = 'bg-blue-600 text-white';
+                }
+
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswer(index)}
+                    disabled={isAnswering || showResult}
+                    className={`p-2 sm:p-3 rounded-lg font-semibold transition-all duration-200 text-left text-xs sm:text-sm ${buttonClass} ${
+                      !isAnswering && !showResult ? 'hover:scale-102' : 'cursor-not-allowed'
+                    }`}
+                  >
+                    <span className="font-bold mr-2">{String.fromCharCode(65 + index)}.</span>
+                    {option}
+                  </button>
+                );
+              })}
             </div>
-            <p className="text-white font-semibold text-sm sm:text-lg mb-4 leading-relaxed">
-              {currentQuestion.question}
-            </p>
-
-            {/* Answer Input */}
-            {currentQuestion.type === 'multiple-choice' ? (
-              <div className="grid grid-cols-1 gap-2 sm:gap-3">
-                {currentQuestion.options?.map((option, index) => {
-                  let buttonClass = 'bg-gray-700 hover:bg-gray-600 text-white';
-                  
-                  if (showResult) {
-                    if (index === currentQuestion.correctAnswer) {
-                      buttonClass = 'bg-green-600 text-white';
-                    } else if (index === selectedAnswer && selectedAnswer !== currentQuestion.correctAnswer) {
-                      buttonClass = 'bg-red-600 text-white';
-                    } else {
-                      buttonClass = 'bg-gray-600 text-gray-400';
-                    }
-                  } else if (selectedAnswer === index) {
-                    buttonClass = 'bg-blue-600 text-white';
-                  }
-
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => handleAnswer(index)}
-                      disabled={isAnswering || showResult}
-                      className={`p-2 sm:p-3 rounded-lg font-semibold transition-all duration-200 text-left text-xs sm:text-sm ${buttonClass} ${
-                        !isAnswering && !showResult ? 'hover:scale-102' : 'cursor-not-allowed'
-                      }`}
-                    >
-                      <span className="font-bold mr-2">{String.fromCharCode(65 + index)}.</span>
-                      {option}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  value={typedAnswer}
-                  onChange={(e) => setTypedAnswer(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && !isAnswering && !showResult && handleAnswer(null)}
-                  disabled={isAnswering || showResult}
-                  placeholder="Type your answer here..."
-                  className="w-full p-3 bg-gray-800 text-white rounded-lg border border-gray-600 focus:border-purple-500 focus:outline-none text-sm sm:text-base"
-                />
-                <button
-                  onClick={() => handleAnswer(null)}
-                  disabled={isAnswering || showResult || !typedAnswer.trim()}
-                  className={`w-full py-2 rounded-lg font-semibold transition-all duration-200 text-sm sm:text-base ${
-                    !isAnswering && !showResult && typedAnswer.trim()
-                      ? 'bg-purple-600 text-white hover:bg-purple-500'
-                      : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  Submit Answer
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Result Feedback */}
-          {showResult && (
-            <div className={`text-center p-3 sm:p-4 rounded-lg ${
-              lastAnswerCorrect 
-                ? 'bg-green-900/50 border border-green-500' 
-                : 'bg-red-900/50 border border-red-500'
-            }`}>
-              <p className={`font-bold text-sm sm:text-base ${
-                lastAnswerCorrect ? 'text-green-400' : 'text-red-400'
-              }`}>
-                {lastAnswerCorrect 
-                  ? '🎉 Correct! You deal damage!' 
-                  : '❌ Wrong! Enemy gets their turn!'}
-              </p>
-              {!lastAnswerCorrect && (
-                <p className="text-gray-300 text-xs sm:text-sm mt-1">
-                  Correct answer: {currentQuestion.type === 'multiple-choice' 
-                    ? `${String.fromCharCode(65 + (currentQuestion.correctAnswer as number))}. ${currentQuestion.options?.[currentQuestion.correctAnswer as number]}`
-                    : currentQuestion.correctAnswer
-                  }
-                </p>
-              )}
+          ) : (
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={typedAnswer}
+                onChange={(e) => setTypedAnswer(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && !isAnswering && !showResult && handleAnswer(null)}
+                disabled={isAnswering || showResult}
+                placeholder="Type your answer here..."
+                className="w-full p-3 bg-gray-800 text-white rounded-lg border border-gray-600 focus:border-purple-500 focus:outline-none text-sm sm:text-base"
+              />
+              <button
+                onClick={() => handleAnswer(null)}
+                disabled={isAnswering || showResult || !typedAnswer.trim()}
+                className={`w-full py-2 rounded-lg font-semibold transition-all duration-200 text-sm sm:text-base ${
+                  !isAnswering && !showResult && typedAnswer.trim()
+                    ? 'bg-purple-600 text-white hover:bg-purple-500'
+                    : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                Submit Answer
+              </button>
             </div>
           )}
-
-          <div className="text-center mt-3">
-            <p className="text-xs sm:text-sm text-gray-300">
-              Answer correctly to <span className="text-green-400 font-semibold">deal damage</span>!
-            </p>
-            <p className={`text-xs font-semibold ${
-              gameMode.current === 'blitz' || gameMode.current === 'bloodlust' ? 'text-yellow-400' : 'text-red-400'
-            }`}>
-              ⚠️ Only {questionTime} seconds to answer!
-            </p>
-          </div>
         </div>
-      )}
+
+        {/* Result Feedback */}
+        {showResult && (
+          <div className={`text-center p-3 sm:p-4 rounded-lg ${
+            lastAnswerCorrect 
+              ? 'bg-green-900/50 border border-green-500' 
+              : 'bg-red-900/50 border border-red-500'
+          }`}>
+            <p className={`font-bold text-sm sm:text-base ${
+              lastAnswerCorrect ? 'text-green-400' : 'text-red-400'
+            }`}>
+              {lastAnswerCorrect 
+                ? '🎉 Correct! You deal damage!' 
+                : '❌ Wrong! The enemy attacks you!'}
+            </p>
+            {!lastAnswerCorrect && (
+              <p className="text-gray-300 text-xs sm:text-sm mt-1">
+                Correct answer: {currentQuestion.type === 'multiple-choice' 
+                  ? `${String.fromCharCode(65 + (currentQuestion.correctAnswer as number))}. ${currentQuestion.options?.[currentQuestion.correctAnswer as number]}`
+                  : currentQuestion.correctAnswer
+                }
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className="text-center mt-3">
+          <p className="text-xs sm:text-sm text-gray-300">
+            Answer correctly to <span className="text-green-400 font-semibold">deal damage</span>!
+          </p>
+          <p className={`text-xs font-semibold ${
+            gameMode.current === 'blitz' || gameMode.current === 'bloodlust' ? 'text-yellow-400' : 'text-red-400'
+          }`}>
+            ⚠️ Only {questionTime} seconds to answer!
+          </p>
+        </div>
+      </div>
 
       {/* Combat Log */}
       <div className="bg-black/40 rounded-lg p-3 sm:p-4 max-h-32 sm:max-h-40 overflow-y-auto">

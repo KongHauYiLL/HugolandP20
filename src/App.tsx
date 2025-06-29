@@ -24,7 +24,6 @@ type ModalView = 'achievements' | 'collection' | 'statistics' | 'gameMode' | 'po
 function App() {
   const {
     gameState,
-    combatState,
     isLoading,
     equipWeapon,
     equipArmor,
@@ -50,7 +49,6 @@ function App() {
     equipRelic,
     unequipRelic,
     sellRelic,
-    handleDodge,
   } = useGameState();
 
   const [currentView, setCurrentView] = useState<GameView>('stats');
@@ -89,7 +87,6 @@ function App() {
                 <li>• Explore multiple game modes and challenges</li>
                 <li>• Progress through infinite zones of adventure</li>
                 <li>• Discover ancient relics in the Yojef Market</li>
-                <li>• Master the new dodge combat system!</li>
               </ul>
             </div>
           </div>
@@ -125,9 +122,7 @@ function App() {
         <Combat
           enemy={gameState.currentEnemy}
           playerStats={gameState.playerStats}
-          combatState={combatState}
           onAttack={attack}
-          onDodge={handleDodge}
           combatLog={gameState.combatLog}
           gameMode={gameState.gameMode}
           knowledgeStreak={gameState.knowledgeStreak}
@@ -426,12 +421,6 @@ function App() {
               <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>{Math.round((gameState.statistics.correctAnswers / Math.max(gameState.statistics.totalQuestionsAnswered, 1)) * 100)}%</span>
             </button>
-
-            {/* Dodge Stats */}
-            <div className="flex items-center gap-1 text-green-300">
-              <span>🎯</span>
-              <span>{gameState.statistics.dodgesSuccessful}/{gameState.statistics.dodgesSuccessful + gameState.statistics.dodgesFailed}</span>
-            </div>
           </div>
           
           {/* Navigation */}
