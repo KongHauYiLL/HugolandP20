@@ -76,16 +76,18 @@ function App() {
     );
   }
 
-  // Show offline progress modal if there are rewards
-  if (gameState.offlineProgress.offlineCoins > 0 || gameState.offlineProgress.offlineGems > 0) {
-    if (currentModal !== 'offlineProgress') {
-      setCurrentModal('offlineProgress');
+  // ONLY show modals if NOT in combat
+  if (!gameState.inCombat) {
+    // Show offline progress modal if there are rewards
+    if (gameState.offlineProgress.offlineCoins > 0 || gameState.offlineProgress.offlineGems > 0) {
+      if (currentModal !== 'offlineProgress') {
+        setCurrentModal('offlineProgress');
+      }
     }
-  }
-
-  // Show daily rewards modal if available
-  if (gameState.dailyRewards.availableReward && currentModal !== 'dailyRewards' && currentModal !== 'offlineProgress') {
-    setCurrentModal('dailyRewards');
+    // Show daily rewards modal if available (only after offline progress is handled)
+    else if (gameState.dailyRewards.availableReward && currentModal !== 'dailyRewards') {
+      setCurrentModal('dailyRewards');
+    }
   }
 
   // Show welcome screen for new players
@@ -327,6 +329,11 @@ function App() {
   };
 
   const renderModal = () => {
+    // Don't show any modals during combat except for reset confirmation
+    if (gameState.inCombat && currentModal !== 'resetConfirm') {
+      return null;
+    }
+
     switch (currentModal) {
       case 'achievements':
         return (
@@ -500,61 +507,66 @@ function App() {
                 <Crown className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-yellow-400 animate-pulse" />
               )}
             </div>
-            <button
-              onClick={() => setCurrentModal('bulkActions')}
-              className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors text-sm"
-            >
-              <Package2 className="w-4 h-4" />
-              Bulk
-            </button>
-          </div>
-          
-          {/* Quick Stats Bar */}
-          <div className="flex justify-center items-center gap-2 sm:gap-4 mb-3 sm:mb-4 text-xs sm:text-sm">
-            <button
-              onClick={() => setCurrentModal('achievements')}
-              className="flex items-center gap-1 text-yellow-300 hover:text-yellow-200 transition-colors"
-            >
-              <Trophy className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>{unlockedAchievements}/{gameState.achievements.length}</span>
-            </button>
-            
-            <button
-              onClick={() => setCurrentModal('collection')}
-              className="flex items-center gap-1 text-indigo-300 hover:text-indigo-200 transition-colors"
-            >
-              <Book className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>Collect</span>
-            </button>
-            
-            <button
-              onClick={() => setCurrentModal('statistics')}
-              className="flex items-center gap-1 text-blue-300 hover:text-blue-200 transition-colors"
-            >
-              <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>{Math.round((gameState.statistics.correctAnswers / Math.max(gameState.statistics.totalQuestionsAnswered, 1)) * 100)}%</span>
-            </button>
-
-            <button
-              onClick={() => setCurrentModal('progression')}
-              className="flex items-center gap-1 text-green-300 hover:text-green-200 transition-colors"
-            >
-              <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>Lv.{gameState.progression.level}</span>
-            </button>
-
-            {gameState.dailyRewards.availableReward && (
+            {/* Only show bulk actions button when not in combat */}
+            {!gameState.inCombat && (
               <button
-                onClick={() => setCurrentModal('dailyRewards')}
-                className="flex items-center gap-1 text-green-300 hover:text-green-200 transition-colors animate-pulse"
+                onClick={() => setCurrentModal('bulkActions')}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors text-sm"
               >
-                <Gift className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>Daily!</span>
+                <Package2 className="w-4 h-4" />
+                Bulk
               </button>
             )}
           </div>
           
-          {/* Navigation */}
+          {/* Quick Stats Bar - Hide during combat */}
+          {!gameState.inCombat && (
+            <div className="flex justify-center items-center gap-2 sm:gap-4 mb-3 sm:mb-4 text-xs sm:text-sm">
+              <button
+                onClick={() => setCurrentModal('achievements')}
+                className="flex items-center gap-1 text-yellow-300 hover:text-yellow-200 transition-colors"
+              >
+                <Trophy className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>{unlockedAchievements}/{gameState.achievements.length}</span>
+              </button>
+              
+              <button
+                onClick={() => setCurrentModal('collection')}
+                className="flex items-center gap-1 text-indigo-300 hover:text-indigo-200 transition-colors"
+              >
+                <Book className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>Collect</span>
+              </button>
+              
+              <button
+                onClick={() => setCurrentModal('statistics')}
+                className="flex items-center gap-1 text-blue-300 hover:text-blue-200 transition-colors"
+              >
+                <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>{Math.round((gameState.statistics.correctAnswers / Math.max(gameState.statistics.totalQuestionsAnswered, 1)) * 100)}%</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentModal('progression')}
+                className="flex items-center gap-1 text-green-300 hover:text-green-200 transition-colors"
+              >
+                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>Lv.{gameState.progression.level}</span>
+              </button>
+
+              {gameState.dailyRewards.availableReward && (
+                <button
+                  onClick={() => setCurrentModal('dailyRewards')}
+                  className="flex items-center gap-1 text-green-300 hover:text-green-200 transition-colors animate-pulse"
+                >
+                  <Gift className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span>Daily!</span>
+                </button>
+              )}
+            </div>
+          )}
+          
+          {/* Navigation - Disable during combat */}
           <nav className="flex justify-center space-x-1 sm:space-x-2 overflow-x-auto pb-2">
             {[
               { id: 'stats', label: 'Hero', icon: User },
