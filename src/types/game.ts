@@ -24,6 +24,7 @@ export interface GameState {
   offlineProgress: OfflineProgress;
   gardenOfGrowth: GardenOfGrowth;
   settings: GameSettings;
+  hasUsedRevival: boolean;
 }
 
 export interface PlayerStats {
@@ -196,6 +197,7 @@ export interface Statistics {
   itemsSold: number;
   totalResearchSpent: number;
   averageAccuracy: number;
+  revivals: number;
 }
 
 export interface CheatSettings {

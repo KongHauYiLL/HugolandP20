@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Enemy } from '../types/game';
-import { Sword, Shield, Heart, Brain, Clock, Zap, Skull, Flame } from 'lucide-react';
+import { Sword, Shield, Heart, Brain, Clock, Zap, Skull, Flame, RotateCcw } from 'lucide-react';
 import { TriviaQuestion, getQuestionByZone, checkAnswer } from '../utils/triviaQuestions';
 
 interface CombatProps {
@@ -24,6 +24,7 @@ interface CombatProps {
     best: number;
     multiplier: number;
   };
+  hasUsedRevival?: boolean;
 }
 
 export const Combat: React.FC<CombatProps> = ({ 
@@ -32,17 +33,19 @@ export const Combat: React.FC<CombatProps> = ({
   onAttack, 
   combatLog, 
   gameMode,
-  knowledgeStreak
+  knowledgeStreak,
+  hasUsedRevival = false
 }) => {
   const [currentQuestion, setCurrentQuestion] = useState<TriviaQuestion | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [typedAnswer, setTypedAnswer] = useState<string>('');
   const [isAnswering, setIsAnswering] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(5);
+  const [timeLeft, setTimeLeft] = useState(8);
   const [showResult, setShowResult] = useState(false);
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
 
-  const questionTime = (gameMode.current === 'blitz' || gameMode.current === 'bloodlust') ? 3 : 5;
+  // Increased time limits to make the game easier
+  const questionTime = (gameMode.current === 'blitz' || gameMode.current === 'bloodlust') ? 5 : 8;
 
   useEffect(() => {
     const question = getQuestionByZone(enemy.zone);
@@ -168,6 +171,13 @@ export const Combat: React.FC<CombatProps> = ({
               🔥 {knowledgeStreak.current} Streak ({Math.round((knowledgeStreak.multiplier - 1) * 100)}% bonus)
             </span>
           )}
+
+          {!hasUsedRevival && (
+            <span className="text-green-300 flex items-center gap-1">
+              <RotateCcw className="w-4 h-4" />
+              Revival Available
+            </span>
+          )}
         </div>
       </div>
 
@@ -177,6 +187,11 @@ export const Combat: React.FC<CombatProps> = ({
           <div className="flex items-center gap-2 mb-2">
             <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
             <span className="text-white font-semibold text-sm sm:text-base">You</span>
+            {!hasUsedRevival && (
+              <span className="text-green-400 text-xs bg-green-900/30 px-2 py-0.5 rounded-full">
+                💖 Revival Ready
+              </span>
+            )}
           </div>
           <div className="w-full bg-gray-700 rounded-full h-2 sm:h-3">
             <div 
@@ -232,7 +247,7 @@ export const Combat: React.FC<CombatProps> = ({
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
             <span className={`font-bold text-sm sm:text-base ${
-              timeLeft <= 2 ? 'text-red-400 animate-pulse' : 'text-yellow-400'
+              timeLeft <= 3 ? 'text-red-400 animate-pulse' : 'text-yellow-400'
             }`}>
               {timeLeft}s
             </span>
@@ -345,10 +360,15 @@ export const Combat: React.FC<CombatProps> = ({
             Answer correctly to <span className="text-green-400 font-semibold">deal damage</span>!
           </p>
           <p className={`text-xs font-semibold ${
-            gameMode.current === 'blitz' || gameMode.current === 'bloodlust' ? 'text-yellow-400' : 'text-red-400'
+            gameMode.current === 'blitz' || gameMode.current === 'bloodlust' ? 'text-yellow-400' : 'text-blue-400'
           }`}>
-            ⚠️ Only {questionTime} seconds to answer!
+            ⏰ You have {questionTime} seconds to answer!
           </p>
+          {!hasUsedRevival && (
+            <p className="text-green-400 text-xs font-semibold mt-1">
+              💖 Don't worry - you get one free revival if you die!
+            </p>
+          )}
         </div>
       </div>
 

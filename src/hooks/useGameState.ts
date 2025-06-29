@@ -84,6 +84,7 @@ const initialStatistics: Statistics = {
   itemsSold: 0,
   totalResearchSpent: 0,
   averageAccuracy: 0,
+  revivals: 0,
 };
 
 const initialCheats: CheatSettings = {
@@ -193,6 +194,7 @@ const initialGameState: GameState = {
   offlineProgress: initialOfflineProgress,
   gardenOfGrowth: initialGardenOfGrowth,
   settings: initialSettings,
+  hasUsedRevival: false,
 };
 
 export const useGameState = () => {
@@ -242,12 +244,12 @@ export const useGameState = () => {
         const lastUpdate = new Date(prev.gardenOfGrowth.lastWatered || prev.gardenOfGrowth.plantedAt || now);
         const hoursPassed = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
         
-        if (hoursPassed >= 1) {
+        if (hoursPassed >= 1) { // Update every hour
           const newWaterHours = Math.max(0, prev.gardenOfGrowth.waterHoursRemaining - hoursPassed);
-          const growthHours = Math.min(hoursPassed, prev.gardenOfGrowth.waterHoursRemaining);
+          const growthRate = 0.5; // 0.5cm per hour
           const newGrowthCm = Math.min(
             prev.gardenOfGrowth.maxGrowthCm,
-            prev.gardenOfGrowth.growthCm + (growthHours * 0.5) // 0.5cm per hour
+            prev.gardenOfGrowth.growthCm + (hoursPassed * growthRate)
           );
           const newTotalBonus = newGrowthCm * 5; // 5% per cm
 
@@ -465,6 +467,7 @@ export const useGameState = () => {
               ...initialSettings,
               ...parsedState.settings,
             },
+            hasUsedRevival: parsedState.hasUsedRevival || false,
           });
         } else {
           setGameState({
@@ -689,8 +692,8 @@ export const useGameState = () => {
       const defResearchBonus = calculateResearchBonus(prev.research.def.level);
       const hpResearchBonus = calculateResearchBonus(prev.research.hp.level);
 
-      // Add garden bonuses
-      const gardenBonus = prev.gardenOfGrowth.totalGrowthBonus / 100;
+      // Add Garden of Growth bonuses
+      const gardenBonus = prev.gardenOfGrowth.totalGrowthBonus / 100; // Convert percentage to decimal
 
       let atkMultiplier = 1 + (atkResearchBonus / 100) + gardenBonus;
       let defMultiplier = 1 + (defResearchBonus / 100) + gardenBonus;
@@ -725,61 +728,6 @@ export const useGameState = () => {
         },
       };
     });
-  }, []);
-
-  const plantSeed = useCallback((): boolean => {
-    setGameState(prev => {
-      if (prev.gardenOfGrowth.isPlanted || prev.coins < prev.gardenOfGrowth.seedCost) {
-        return prev;
-      }
-
-      const now = new Date();
-      return {
-        ...prev,
-        coins: prev.coins - prev.gardenOfGrowth.seedCost,
-        gardenOfGrowth: {
-          ...prev.gardenOfGrowth,
-          isPlanted: true,
-          plantedAt: now,
-          lastWatered: now,
-          waterHoursRemaining: 24, // Start with 24 hours of water
-        },
-      };
-    });
-
-    return true;
-  }, []);
-
-  const buyWater = useCallback((hours: number): boolean => {
-    setGameState(prev => {
-      const cost = Math.floor((hours / 24) * prev.gardenOfGrowth.waterCost);
-      
-      if (prev.coins < cost || !prev.gardenOfGrowth.isPlanted) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        coins: prev.coins - cost,
-        gardenOfGrowth: {
-          ...prev.gardenOfGrowth,
-          waterHoursRemaining: prev.gardenOfGrowth.waterHoursRemaining + hours,
-          lastWatered: new Date(),
-        },
-      };
-    });
-
-    return true;
-  }, []);
-
-  const updateSettings = useCallback((newSettings: Partial<GameSettings>) => {
-    setGameState(prev => ({
-      ...prev,
-      settings: {
-        ...prev.settings,
-        ...newSettings,
-      },
-    }));
   }, []);
 
   const setGameMode = useCallback((mode: 'normal' | 'blitz' | 'bloodlust' | 'crazy' | 'survival' | 'timeAttack' | 'boss') => {
@@ -972,6 +920,10 @@ export const useGameState = () => {
             ? prev.inventory.armor.filter(a => !itemIds.includes(a.id))
             : prev.inventory.armor,
         },
+        statistics: {
+          ...prev.statistics,
+          itemsSold: prev.statistics.itemsSold + selectedItems.length,
+        },
       };
     });
   }, []);
@@ -1009,6 +961,10 @@ export const useGameState = () => {
           currentArmor: type === 'armor' && prev.inventory.currentArmor && itemIds.includes(prev.inventory.currentArmor.id)
             ? updatedItems.find(a => a.id === prev.inventory.currentArmor?.id) as Armor || null
             : prev.inventory.currentArmor,
+        },
+        statistics: {
+          ...prev.statistics,
+          itemsUpgraded: prev.statistics.itemsUpgraded + selectedItems.length,
         },
       };
     });
@@ -1132,6 +1088,61 @@ export const useGameState = () => {
     updatePlayerStats();
   }, [updatePlayerStats]);
 
+  const plantSeed = useCallback((): boolean => {
+    setGameState(prev => {
+      if (prev.gardenOfGrowth.isPlanted || prev.coins < prev.gardenOfGrowth.seedCost) {
+        return prev;
+      }
+
+      const now = new Date();
+      return {
+        ...prev,
+        coins: prev.coins - prev.gardenOfGrowth.seedCost,
+        gardenOfGrowth: {
+          ...prev.gardenOfGrowth,
+          isPlanted: true,
+          plantedAt: now,
+          lastWatered: now,
+          waterHoursRemaining: 24, // Start with 24 hours of water
+        },
+      };
+    });
+
+    return true;
+  }, []);
+
+  const buyWater = useCallback((hours: number): boolean => {
+    setGameState(prev => {
+      const cost = (hours / 24) * prev.gardenOfGrowth.waterCost;
+      
+      if (prev.coins < cost || !prev.gardenOfGrowth.isPlanted) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        coins: prev.coins - cost,
+        gardenOfGrowth: {
+          ...prev.gardenOfGrowth,
+          waterHoursRemaining: prev.gardenOfGrowth.waterHoursRemaining + hours,
+          lastWatered: new Date(),
+        },
+      };
+    });
+
+    return true;
+  }, []);
+
+  const updateSettings = useCallback((newSettings: Partial<GameSettings>) => {
+    setGameState(prev => ({
+      ...prev,
+      settings: {
+        ...prev.settings,
+        ...newSettings,
+      },
+    }));
+  }, []);
+
   const equipWeapon = useCallback((weapon: Weapon) => {
     setGameState(prev => ({
       ...prev,
@@ -1177,6 +1188,10 @@ export const useGameState = () => {
           weapons: updatedWeapons,
           currentWeapon: updatedCurrentWeapon,
         },
+        statistics: {
+          ...prev.statistics,
+          itemsUpgraded: prev.statistics.itemsUpgraded + 1,
+        },
       };
     });
     updatePlayerStats();
@@ -1205,6 +1220,10 @@ export const useGameState = () => {
           armor: updatedArmor,
           currentArmor: updatedCurrentArmor,
         },
+        statistics: {
+          ...prev.statistics,
+          itemsUpgraded: prev.statistics.itemsUpgraded + 1,
+        },
       };
     });
     updatePlayerStats();
@@ -1222,6 +1241,10 @@ export const useGameState = () => {
           ...prev.inventory,
           weapons: prev.inventory.weapons.filter(w => w.id !== weaponId),
         },
+        statistics: {
+          ...prev.statistics,
+          itemsSold: prev.statistics.itemsSold + 1,
+        },
       };
     });
   }, []);
@@ -1237,6 +1260,10 @@ export const useGameState = () => {
         inventory: {
           ...prev.inventory,
           armor: prev.inventory.armor.filter(a => a.id !== armorId),
+        },
+        statistics: {
+          ...prev.statistics,
+          itemsSold: prev.statistics.itemsSold + 1,
         },
       };
     });
@@ -1258,6 +1285,10 @@ export const useGameState = () => {
             level: newLevel,
             totalSpent: prev.research[type].totalSpent + researchCost,
           },
+        },
+        statistics: {
+          ...prev.statistics,
+          totalResearchSpent: prev.statistics.totalResearchSpent + researchCost,
         },
       };
     });
@@ -1494,6 +1525,8 @@ export const useGameState = () => {
               zonesReached: Math.max(prev.statistics.zonesReached, newZone),
               coinsEarned: prev.statistics.coinsEarned + coinsEarned,
               gemsEarned: prev.statistics.gemsEarned + gemsEarned,
+              totalVictories: prev.statistics.totalVictories + 1,
+              totalDamageDealt: prev.statistics.totalDamageDealt + finalDamage,
             },
           };
         }
@@ -1504,6 +1537,10 @@ export const useGameState = () => {
           playerStats: { ...prev.playerStats, hp: newPlayerHp },
           combatLog: newCombatLog,
           inventory: updatedInventory,
+          statistics: {
+            ...prev.statistics,
+            totalDamageDealt: prev.statistics.totalDamageDealt + finalDamage,
+          },
         };
       } else {
         const damage = Math.max(1, prev.currentEnemy.atk - prev.playerStats.def);
@@ -1511,6 +1548,22 @@ export const useGameState = () => {
         newCombatLog.push(`You missed! The ${prev.currentEnemy.name} deals ${damage} damage to you!`);
         
         if (newPlayerHp <= 0) {
+          // Check for revival
+          if (!prev.hasUsedRevival) {
+            newCombatLog.push(`💖 You have been revived with full health! (One-time revival used)`);
+            return {
+              ...prev,
+              playerStats: { ...prev.playerStats, hp: prev.playerStats.maxHp },
+              combatLog: newCombatLog,
+              hasUsedRevival: true,
+              statistics: {
+                ...prev.statistics,
+                revivals: prev.statistics.revivals + 1,
+                totalDamageTaken: prev.statistics.totalDamageTaken + damage,
+              },
+            };
+          }
+
           combatEnded = true;
           playerWon = false;
           newCombatLog.push(`You were defeated by the ${prev.currentEnemy.name}...`);
@@ -1528,6 +1581,11 @@ export const useGameState = () => {
                 ...prev.gameMode,
                 survivalLives: newLives,
               },
+              statistics: {
+                ...prev.statistics,
+                totalDeaths: prev.statistics.totalDeaths + 1,
+                totalDamageTaken: prev.statistics.totalDamageTaken + damage,
+              },
             };
           }
           
@@ -1537,6 +1595,11 @@ export const useGameState = () => {
             inCombat: false,
             combatLog: newCombatLog,
             playerStats: { ...prev.playerStats, hp: newPlayerHp },
+            statistics: {
+              ...prev.statistics,
+              totalDeaths: prev.statistics.totalDeaths + 1,
+              totalDamageTaken: prev.statistics.totalDamageTaken + damage,
+            },
           };
         }
 
@@ -1545,6 +1608,10 @@ export const useGameState = () => {
           currentEnemy: { ...prev.currentEnemy, hp: newEnemyHp },
           playerStats: { ...prev.playerStats, hp: newPlayerHp },
           combatLog: newCombatLog,
+          statistics: {
+            ...prev.statistics,
+            totalDamageTaken: prev.statistics.totalDamageTaken + damage,
+          },
         };
       }
     });
