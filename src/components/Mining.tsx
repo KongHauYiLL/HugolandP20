@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Mining as MiningType } from '../types/game';
-import { Gem, Coins, Zap, Star, X, Sparkles, Pickaxe } from 'lucide-react';
+import { Gem, Coins, Zap, Star, X, Sparkles } from 'lucide-react';
 
 interface MiningProps {
   mining: MiningType;
@@ -35,7 +35,7 @@ export const Mining: React.FC<MiningProps> = ({
 
   // Generate new gem node
   const generateGemNode = () => {
-    const isShiny = Math.random() < 0.1; // 10% chance for shiny gem
+    const isShiny = Math.random() < 0.1; // 10% chance for shiny gem (reduced from 30%)
     const newNode: GemNode = {
       x: Math.floor(Math.random() * GRID_SIZE),
       y: Math.floor(Math.random() * GRID_SIZE),
@@ -92,23 +92,18 @@ export const Mining: React.FC<MiningProps> = ({
           <div
             key={`${x}-${y}`}
             onClick={() => handleCellClick(x, y)}
-            className={`aspect-square border-2 rounded-xl cursor-pointer transition-all duration-300 relative overflow-hidden ${
+            className={`aspect-square border-2 rounded-lg cursor-pointer transition-all duration-200 relative overflow-hidden ${
               hasGem
                 ? gemNode?.isShiny
-                  ? 'border-yellow-400/70 bg-gradient-to-br from-yellow-900/60 to-orange-900/60 hover:from-yellow-800/70 hover:to-orange-800/70 shadow-lg shadow-yellow-500/30 backdrop-blur-sm'
-                  : 'border-purple-400/70 bg-gradient-to-br from-purple-900/60 to-indigo-900/60 hover:from-purple-800/70 hover:to-indigo-800/70 shadow-lg shadow-purple-500/20 backdrop-blur-sm'
-                : 'border-gray-600/50 bg-gray-800/40 hover:bg-gray-700/50 backdrop-blur-sm'
-            } hover:scale-105`}
+                  ? 'border-yellow-400 bg-gradient-to-br from-yellow-900 to-orange-900 hover:from-yellow-800 hover:to-orange-800 shadow-lg shadow-yellow-500/50'
+                  : 'border-purple-400 bg-gradient-to-br from-purple-900 to-indigo-900 hover:from-purple-800 hover:to-indigo-800 shadow-lg shadow-purple-500/30'
+                : 'border-gray-600 bg-gray-800 hover:bg-gray-700'
+            }`}
           >
             {hasGem && (
               <div className="absolute inset-0 flex items-center justify-center">
                 {gemNode?.isShiny ? (
-                  <div className="relative">
-                    <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-400 animate-pulse" />
-                    <div className="absolute inset-0 animate-ping">
-                      <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-300 opacity-30" />
-                    </div>
-                  </div>
+                  <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-400 animate-pulse" />
                 ) : (
                   <Gem className="w-4 h-4 sm:w-6 sm:h-6 text-purple-400 animate-pulse" />
                 )}
@@ -122,56 +117,39 @@ export const Mining: React.FC<MiningProps> = ({
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-900/80 via-slate-900/80 to-gray-800/80 backdrop-blur-lg p-4 sm:p-6 lg:p-8 rounded-2xl shadow-2xl border border-gray-500/30">
-      <div className="text-center mb-6 sm:mb-8">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <Pickaxe className="w-6 h-6 sm:w-8 sm:h-8 text-amber-400" />
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-400 via-amber-400 to-purple-400 bg-clip-text text-transparent">
-            Gem Mining
-          </h2>
-          <Gem className="w-6 h-6 sm:w-8 sm:h-8 text-purple-400 animate-pulse" />
+    <div className="bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 p-4 sm:p-6 rounded-lg shadow-2xl">
+      <div className="text-center mb-4 sm:mb-6">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <Gem className="w-6 h-6 sm:w-8 sm:h-8 text-purple-400" />
+          <h2 className="text-xl sm:text-2xl font-bold text-white">Gem Mining</h2>
         </div>
-        <p className="text-gray-300 text-sm sm:text-base lg:text-lg mb-4">Click gem nodes to mine them instantly!</p>
+        <p className="text-gray-300 text-sm sm:text-base">Click gem nodes to mine them instantly!</p>
         
-        <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
-          <div className="bg-black/40 backdrop-blur-sm p-3 sm:p-4 rounded-xl border border-purple-500/30">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Gem className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
-              <span className="text-white font-semibold text-sm sm:text-base">Gems</span>
-            </div>
-            <p className="text-lg sm:text-xl font-bold text-purple-400">{gems.toLocaleString()}</p>
+        <div className="flex items-center justify-center gap-4 mt-3">
+          <div className="flex items-center gap-2 text-purple-300">
+            <Gem className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="font-semibold text-sm sm:text-base">{gems} Gems</span>
           </div>
-          
-          <div className="bg-black/40 backdrop-blur-sm p-3 sm:p-4 rounded-xl border border-yellow-500/30">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
-              <span className="text-white font-semibold text-sm sm:text-base">Shiny</span>
-            </div>
-            <p className="text-lg sm:text-xl font-bold text-yellow-400">{shinyGems.toLocaleString()}</p>
+          <div className="flex items-center gap-2 text-yellow-300">
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="font-semibold text-sm sm:text-base">{shinyGems} Shiny</span>
           </div>
-          
-          <div className="bg-black/40 backdrop-blur-sm p-3 sm:p-4 rounded-xl border border-orange-500/30">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-orange-400" />
-              <span className="text-white font-semibold text-sm sm:text-base">Power</span>
-            </div>
-            <p className="text-lg sm:text-xl font-bold text-orange-400">{mining.efficiency}</p>
+          <div className="flex items-center gap-2 text-orange-300">
+            <Zap className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="font-semibold text-sm sm:text-base">Efficiency: {mining.efficiency}</span>
           </div>
         </div>
       </div>
 
       {/* Mining Grid */}
-      <div className="mb-6 sm:mb-8">
-        <h3 className="text-white font-semibold mb-4 text-center text-base sm:text-lg">Mining Area (5x5)</h3>
-        <div className="grid grid-cols-5 gap-2 sm:gap-3 max-w-sm mx-auto">
+      <div className="mb-4 sm:mb-6">
+        <h3 className="text-white font-semibold mb-3 text-center text-sm sm:text-base">Mining Area (5x5)</h3>
+        <div className="grid grid-cols-5 gap-1 sm:gap-2 max-w-sm mx-auto">
           {renderMiningGrid()}
         </div>
-        <div className="text-center text-gray-400 text-xs sm:text-sm mt-4 space-y-2">
-          <div className="bg-black/30 backdrop-blur-sm p-3 rounded-xl border border-gray-600/30">
-            <p className="mb-1">💎 Purple gems = 1 gem each</p>
-            <p className="mb-1">✨ Golden gems = 10 gems each (10% chance)</p>
-            <p className="text-green-400">Click once to mine instantly!</p>
-          </div>
+        <div className="text-center text-gray-400 text-xs sm:text-sm mt-3 space-y-1">
+          <p>Purple gems = 1 gem each | Golden gems = 10 gems each (10% chance)</p>
+          <p>Click once to mine instantly!</p>
         </div>
       </div>
 
@@ -179,18 +157,17 @@ export const Mining: React.FC<MiningProps> = ({
       <div className="text-center">
         <button
           onClick={() => setShowShop(true)}
-          className="group px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-yellow-600/80 to-orange-600/80 backdrop-blur-sm text-white font-bold rounded-xl hover:from-yellow-500/90 hover:to-orange-500/90 transition-all duration-300 flex items-center gap-3 mx-auto text-sm sm:text-base border border-yellow-500/30 hover:scale-105 shadow-lg"
+          className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-yellow-600 to-orange-600 text-white font-bold rounded-lg hover:from-yellow-500 hover:to-orange-500 transition-all duration-200 flex items-center gap-2 mx-auto text-sm sm:text-base"
         >
-          <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 group-hover:animate-spin" />
+          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
           Shiny Exchange
-          <Star className="w-5 h-5 sm:w-6 sm:h-6 group-hover:animate-pulse" />
         </button>
       </div>
 
       {/* Exchange Shop Modal */}
       {showShop && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-yellow-900/90 via-orange-900/90 to-amber-900/90 backdrop-blur-lg p-6 sm:p-8 rounded-2xl border border-yellow-500/50 max-w-md w-full shadow-2xl">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-yellow-900 to-orange-900 p-4 sm:p-6 rounded-lg border border-yellow-500/50 max-w-md w-full">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
                 <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-400" />
@@ -201,27 +178,24 @@ export const Mining: React.FC<MiningProps> = ({
               </div>
               <button
                 onClick={() => setShowShop(false)}
-                className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
+                className="text-gray-400 hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-6">
-              <div className="bg-black/40 backdrop-blur-sm p-4 sm:p-6 rounded-xl border border-yellow-500/30">
+            <div className="space-y-4">
+              <div className="bg-black/30 p-4 rounded-lg">
                 <div className="text-center mb-4">
-                  <div className="flex items-center justify-center gap-3 mb-3">
-                    <Sparkles className="w-8 h-8 text-yellow-400" />
-                    <span className="text-white font-bold text-lg sm:text-xl">Exchange Rate</span>
-                    <Gem className="w-8 h-8 text-purple-400" />
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Sparkles className="w-6 h-6 text-yellow-400" />
+                    <span className="text-white font-bold text-lg">Exchange Rate</span>
                   </div>
-                  <p className="text-yellow-300 text-xl sm:text-2xl font-bold">1 Shiny Gem = 10 Regular Gems</p>
+                  <p className="text-yellow-300 text-xl font-bold">1 Shiny Gem = 10 Regular Gems</p>
                 </div>
                 
-                <div className="text-center mb-6">
-                  <div className="bg-yellow-900/40 backdrop-blur-sm p-3 rounded-lg border border-yellow-500/30">
-                    <p className="text-white">You have: <span className="font-bold text-yellow-400 text-lg">{shinyGems}</span> shiny gems</p>
-                  </div>
+                <div className="text-center mb-4">
+                  <p className="text-white">You have: <span className="font-bold text-yellow-400">{shinyGems}</span> shiny gems</p>
                 </div>
 
                 <div className="space-y-3">
@@ -230,10 +204,10 @@ export const Mining: React.FC<MiningProps> = ({
                       key={amount}
                       onClick={() => handleExchange(amount)}
                       disabled={shinyGems < amount}
-                      className={`w-full py-3 sm:py-4 rounded-lg font-semibold transition-all duration-300 text-sm sm:text-base ${
+                      className={`w-full py-2 rounded-lg font-semibold transition-all text-sm ${
                         shinyGems >= amount
-                          ? 'bg-yellow-600/80 backdrop-blur-sm text-white hover:bg-yellow-500/90 border border-yellow-500/30 hover:scale-105'
-                          : 'bg-gray-600/50 backdrop-blur-sm text-gray-400 cursor-not-allowed border border-gray-600/30'
+                          ? 'bg-yellow-600 text-white hover:bg-yellow-500'
+                          : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                       }`}
                     >
                       Exchange {amount} Shiny → {amount * 10} Gems
@@ -243,7 +217,7 @@ export const Mining: React.FC<MiningProps> = ({
                   {shinyGems > 0 && (
                     <button
                       onClick={() => handleExchange(shinyGems)}
-                      className="w-full py-3 sm:py-4 bg-gradient-to-r from-yellow-600/80 to-orange-600/80 backdrop-blur-sm text-white font-bold rounded-lg hover:from-yellow-500/90 hover:to-orange-500/90 transition-all duration-300 text-sm sm:text-base border border-yellow-500/30 hover:scale-105"
+                      className="w-full py-2 bg-gradient-to-r from-yellow-600 to-orange-600 text-white font-bold rounded-lg hover:from-yellow-500 hover:to-orange-500 transition-all text-sm"
                     >
                       Exchange All ({shinyGems} → {shinyGems * 10} Gems)
                     </button>
@@ -252,12 +226,10 @@ export const Mining: React.FC<MiningProps> = ({
               </div>
             </div>
 
-            <div className="mt-6 text-center">
-              <div className="bg-black/30 backdrop-blur-sm p-3 rounded-lg border border-yellow-500/20">
-                <p className="text-yellow-300 text-xs sm:text-sm">
-                  ✨ Shiny gems are rare and valuable! Use them wisely. ✨
-                </p>
-              </div>
+            <div className="mt-4 text-center">
+              <p className="text-yellow-300 text-xs">
+                Shiny gems are rare and valuable! Use them wisely.
+              </p>
             </div>
           </div>
         </div>
