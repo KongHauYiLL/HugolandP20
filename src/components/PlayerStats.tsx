@@ -1,6 +1,6 @@
 import React from 'react';
 import { PlayerTag } from '../types/game';
-import { Heart, Sword, Shield, MapPin, Coins, Gem, Sparkles } from 'lucide-react';
+import { Heart, Sword, Shield, MapPin, Coins, Gem, Sparkles, TrendingUp } from 'lucide-react';
 
 interface PlayerStatsProps {
   playerStats: {
@@ -14,6 +14,12 @@ interface PlayerStatsProps {
   gems: number;
   shinyGems: number;
   playerTags: PlayerTag[];
+  progression: {
+    level: number;
+    experience: number;
+    experienceToNext: number;
+    skillPoints: number;
+  };
 }
 
 export const PlayerStats: React.FC<PlayerStatsProps> = ({ 
@@ -22,7 +28,8 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
   coins, 
   gems, 
   shinyGems, 
-  playerTags 
+  playerTags,
+  progression
 }) => {
   const unlockedTags = playerTags.filter(tag => tag.unlocked);
 
@@ -46,8 +53,33 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
           </div>
         </div>
       )}
-      
+
       <div className="space-y-3 sm:space-y-4">
+        {/* Character Level */}
+        <div className="bg-black/30 p-3 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" />
+            <span className="text-white font-semibold text-sm sm:text-base">Character Level</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-indigo-400 font-bold text-lg">Lv.{progression.level}</span>
+            <div className="flex-1">
+              <div className="w-full bg-gray-700 rounded-full h-2">
+                <div 
+                  className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${(progression.experience / progression.experienceToNext) * 100}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-300 mt-1">
+                {progression.experience}/{progression.experienceToNext} XP
+              </p>
+            </div>
+            <span className="text-yellow-400 font-semibold text-sm">
+              SP: {progression.skillPoints}
+            </span>
+          </div>
+        </div>
+        
         {/* Health */}
         <div className="bg-black/30 p-3 rounded-lg">
           <div className="flex items-center gap-2 mb-2">

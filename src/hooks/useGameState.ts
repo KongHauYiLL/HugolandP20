@@ -230,7 +230,7 @@ export const useGameState = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Garden growth and water consumption
+  // Garden growth system
   useEffect(() => {
     const interval = setInterval(() => {
       setGameState(prev => {
@@ -241,23 +241,23 @@ export const useGameState = () => {
         const now = new Date();
         const lastUpdate = new Date(prev.gardenOfGrowth.lastWatered || prev.gardenOfGrowth.plantedAt || now);
         const hoursPassed = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
-
+        
         if (hoursPassed >= 1) {
           const newWaterHours = Math.max(0, prev.gardenOfGrowth.waterHoursRemaining - hoursPassed);
-          const growthRate = 0.5; // 0.5cm per hour
-          const newGrowth = Math.min(
-            prev.gardenOfGrowth.growthCm + (hoursPassed * growthRate),
-            prev.gardenOfGrowth.maxGrowthCm
+          const growthHours = Math.min(hoursPassed, prev.gardenOfGrowth.waterHoursRemaining);
+          const newGrowthCm = Math.min(
+            prev.gardenOfGrowth.maxGrowthCm,
+            prev.gardenOfGrowth.growthCm + (growthHours * 0.5) // 0.5cm per hour
           );
-          const newBonus = newGrowth * 5; // 5% bonus per cm
+          const newTotalBonus = newGrowthCm * 5; // 5% per cm
 
           return {
             ...prev,
             gardenOfGrowth: {
               ...prev.gardenOfGrowth,
               waterHoursRemaining: newWaterHours,
-              growthCm: newGrowth,
-              totalGrowthBonus: newBonus,
+              growthCm: newGrowthCm,
+              totalGrowthBonus: newTotalBonus,
               lastWatered: now,
             },
           };
@@ -690,7 +690,7 @@ export const useGameState = () => {
       const hpResearchBonus = calculateResearchBonus(prev.research.hp.level);
 
       // Add garden bonuses
-      const gardenBonus = prev.gardenOfGrowth.totalGrowthBonus / 100; // Convert percentage to multiplier
+      const gardenBonus = prev.gardenOfGrowth.totalGrowthBonus / 100;
 
       let atkMultiplier = 1 + (atkResearchBonus / 100) + gardenBonus;
       let defMultiplier = 1 + (defResearchBonus / 100) + gardenBonus;
@@ -752,8 +752,9 @@ export const useGameState = () => {
 
   const buyWater = useCallback((hours: number): boolean => {
     setGameState(prev => {
-      const cost = (hours / 24) * prev.gardenOfGrowth.waterCost;
-      if (prev.coins < cost) {
+      const cost = Math.floor((hours / 24) * prev.gardenOfGrowth.waterCost);
+      
+      if (prev.coins < cost || !prev.gardenOfGrowth.isPlanted) {
         return prev;
       }
 
@@ -971,10 +972,6 @@ export const useGameState = () => {
             ? prev.inventory.armor.filter(a => !itemIds.includes(a.id))
             : prev.inventory.armor,
         },
-        statistics: {
-          ...prev.statistics,
-          itemsSold: prev.statistics.itemsSold + selectedItems.length,
-        },
       };
     });
   }, []);
@@ -1012,10 +1009,6 @@ export const useGameState = () => {
           currentArmor: type === 'armor' && prev.inventory.currentArmor && itemIds.includes(prev.inventory.currentArmor.id)
             ? updatedItems.find(a => a.id === prev.inventory.currentArmor?.id) as Armor || null
             : prev.inventory.currentArmor,
-        },
-        statistics: {
-          ...prev.statistics,
-          itemsUpgraded: prev.statistics.itemsUpgraded + selectedItems.length,
         },
       };
     });
@@ -1091,10 +1084,6 @@ export const useGameState = () => {
           ...prev.inventory,
           relics: updatedRelics,
           equippedRelics: updatedEquippedRelics,
-        },
-        statistics: {
-          ...prev.statistics,
-          itemsUpgraded: prev.statistics.itemsUpgraded + 1,
         },
       };
     });
@@ -1188,10 +1177,6 @@ export const useGameState = () => {
           weapons: updatedWeapons,
           currentWeapon: updatedCurrentWeapon,
         },
-        statistics: {
-          ...prev.statistics,
-          itemsUpgraded: prev.statistics.itemsUpgraded + 1,
-        },
       };
     });
     updatePlayerStats();
@@ -1220,10 +1205,6 @@ export const useGameState = () => {
           armor: updatedArmor,
           currentArmor: updatedCurrentArmor,
         },
-        statistics: {
-          ...prev.statistics,
-          itemsUpgraded: prev.statistics.itemsUpgraded + 1,
-        },
       };
     });
     updatePlayerStats();
@@ -1241,10 +1222,6 @@ export const useGameState = () => {
           ...prev.inventory,
           weapons: prev.inventory.weapons.filter(w => w.id !== weaponId),
         },
-        statistics: {
-          ...prev.statistics,
-          itemsSold: prev.statistics.itemsSold + 1,
-        },
       };
     });
   }, []);
@@ -1260,10 +1237,6 @@ export const useGameState = () => {
         inventory: {
           ...prev.inventory,
           armor: prev.inventory.armor.filter(a => a.id !== armorId),
-        },
-        statistics: {
-          ...prev.statistics,
-          itemsSold: prev.statistics.itemsSold + 1,
         },
       };
     });
@@ -1285,10 +1258,6 @@ export const useGameState = () => {
             level: newLevel,
             totalSpent: prev.research[type].totalSpent + researchCost,
           },
-        },
-        statistics: {
-          ...prev.statistics,
-          totalResearchSpent: prev.statistics.totalResearchSpent + researchCost,
         },
       };
     });
@@ -1525,8 +1494,6 @@ export const useGameState = () => {
               zonesReached: Math.max(prev.statistics.zonesReached, newZone),
               coinsEarned: prev.statistics.coinsEarned + coinsEarned,
               gemsEarned: prev.statistics.gemsEarned + gemsEarned,
-              totalVictories: prev.statistics.totalVictories + 1,
-              totalDamageDealt: prev.statistics.totalDamageDealt + finalDamage,
             },
           };
         }
@@ -1537,10 +1504,6 @@ export const useGameState = () => {
           playerStats: { ...prev.playerStats, hp: newPlayerHp },
           combatLog: newCombatLog,
           inventory: updatedInventory,
-          statistics: {
-            ...prev.statistics,
-            totalDamageDealt: prev.statistics.totalDamageDealt + finalDamage,
-          },
         };
       } else {
         const damage = Math.max(1, prev.currentEnemy.atk - prev.playerStats.def);
@@ -1565,11 +1528,6 @@ export const useGameState = () => {
                 ...prev.gameMode,
                 survivalLives: newLives,
               },
-              statistics: {
-                ...prev.statistics,
-                totalDeaths: prev.statistics.totalDeaths + 1,
-                totalDamageTaken: prev.statistics.totalDamageTaken + damage,
-              },
             };
           }
           
@@ -1579,11 +1537,6 @@ export const useGameState = () => {
             inCombat: false,
             combatLog: newCombatLog,
             playerStats: { ...prev.playerStats, hp: newPlayerHp },
-            statistics: {
-              ...prev.statistics,
-              totalDeaths: prev.statistics.totalDeaths + 1,
-              totalDamageTaken: prev.statistics.totalDamageTaken + damage,
-            },
           };
         }
 
@@ -1592,10 +1545,6 @@ export const useGameState = () => {
           currentEnemy: { ...prev.currentEnemy, hp: newEnemyHp },
           playerStats: { ...prev.playerStats, hp: newPlayerHp },
           combatLog: newCombatLog,
-          statistics: {
-            ...prev.statistics,
-            totalDamageTaken: prev.statistics.totalDamageTaken + damage,
-          },
         };
       }
     });

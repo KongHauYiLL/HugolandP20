@@ -180,31 +180,8 @@ function App() {
               gems={gameState.gems}
               shinyGems={gameState.shinyGems}
               playerTags={gameState.playerTags}
+              progression={gameState.progression}
             />
-            
-            {/* Progression Display */}
-            <div className="bg-gradient-to-r from-indigo-900/50 to-purple-900/50 p-3 sm:p-4 rounded-lg border border-indigo-500/50">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-white font-bold text-sm sm:text-base">Character Level</h3>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-indigo-400 font-bold text-lg">Lv.{gameState.progression.level}</span>
-                <div className="flex-1">
-                  <div className="w-full bg-gray-700 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${(gameState.progression.experience / gameState.progression.experienceToNext) * 100}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-300 mt-1">
-                    {gameState.progression.experience}/{gameState.progression.experienceToNext} XP
-                  </p>
-                </div>
-                <span className="text-yellow-400 font-semibold text-sm">
-                  SP: {gameState.progression.skillPoints}
-                </span>
-              </div>
-            </div>
 
             {/* Garden Status */}
             {gameState.gardenOfGrowth.isPlanted && (
