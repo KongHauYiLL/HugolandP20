@@ -988,14 +988,66 @@ export const useGameState = () => {
   }, [gameState.zone, gameState.gameMode.current]);
 
   const handleDodge = useCallback((successful: boolean) => {
-    setGameState(prev => ({
-      ...prev,
-      statistics: {
-        ...prev.statistics,
-        dodgesSuccessful: prev.statistics.dodgesSuccessful + (successful ? 1 : 0),
-        dodgesFailed: prev.statistics.dodgesFailed + (successful ? 0 : 1),
-      },
-    }));
+    setGameState(prev => {
+      if (!prev.currentEnemy || !prev.inCombat) return prev;
+
+      let newCombatLog = [...prev.combatLog];
+      let newPlayerHp = prev.playerStats.hp;
+      let combatEnded = false;
+
+      if (successful) {
+        newCombatLog.push('You successfully dodged the enemy attack!');
+      } else {
+        // Player failed to dodge - take damage
+        const enemy = prev.currentEnemy;
+        let damage = Math.max(1, enemy.atk - prev.playerStats.def);
+        
+        // Apply enemy ability effects if they have any
+        if (enemy.abilities.length > 0) {
+          const randomAbility = enemy.abilities[Math.floor(Math.random() * enemy.abilities.length)];
+          const abilityResult = applyEnemyAbilityEffect(enemy, randomAbility, prev.playerStats);
+          damage = Math.max(damage, abilityResult.damage);
+          
+          newCombatLog.push(`Failed to dodge! ${enemy.name} uses ${randomAbility.name}!`);
+          if (abilityResult.effect) {
+            newCombatLog.push(abilityResult.effect);
+          }
+        } else {
+          newCombatLog.push(`Failed to dodge! ${enemy.name} deals ${damage} damage!`);
+        }
+
+        newPlayerHp = Math.max(0, prev.playerStats.hp - damage);
+        
+        if (newPlayerHp <= 0) {
+          combatEnded = true;
+          newCombatLog.push(`You were defeated by the ${enemy.name}...`);
+          
+          return {
+            ...prev,
+            currentEnemy: null,
+            inCombat: false,
+            combatLog: newCombatLog,
+            playerStats: { ...prev.playerStats, hp: newPlayerHp },
+            statistics: {
+              ...prev.statistics,
+              dodgesSuccessful: prev.statistics.dodgesSuccessful + (successful ? 1 : 0),
+              dodgesFailed: prev.statistics.dodgesFailed + (successful ? 0 : 1),
+            },
+          };
+        }
+      }
+
+      return {
+        ...prev,
+        combatLog: newCombatLog,
+        playerStats: { ...prev.playerStats, hp: newPlayerHp },
+        statistics: {
+          ...prev.statistics,
+          dodgesSuccessful: prev.statistics.dodgesSuccessful + (successful ? 1 : 0),
+          dodgesFailed: prev.statistics.dodgesFailed + (successful ? 0 : 1),
+        },
+      };
+    });
 
     setCombatState(prev => ({
       ...prev,
@@ -1020,11 +1072,16 @@ export const useGameState = () => {
 
     // Start dodge window timer
     setTimeout(() => {
-      setCombatState(prev => ({
-        ...prev,
-        dodgeButtonReady: true,
-        dodgeTimeLeft: 500, // 0.5 seconds to click
-      }));
+      setCombatState(prev => {
+        if (prev.enemyAttackPending) {
+          return {
+            ...prev,
+            dodgeButtonReady: true,
+            dodgeTimeLeft: 500, // 0.5 seconds to click
+          };
+        }
+        return prev;
+      });
 
       // Auto-fail dodge if not clicked in time
       setTimeout(() => {
