@@ -8,7 +8,7 @@ import { Research } from './components/Research';
 import { Achievements } from './components/Achievements';
 import { CollectionBook } from './components/CollectionBook';
 import { Statistics } from './components/Statistics';
-import { GameModeSelector } from './components/GameModeSelector';
+import { EnhancedGameModes } from './components/EnhancedGameModes';
 import { PokyegMarket } from './components/PokyegMarket';
 import { Tutorial } from './components/Tutorial';
 import { CheatPanel } from './components/CheatPanel';
@@ -16,10 +16,14 @@ import { Mining } from './components/Mining';
 import { YojefMarket } from './components/YojefMarket';
 import { FloatingIcons } from './components/FloatingIcons';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
-import { Shield, Package, User, Play, RotateCcw, Brain, Crown, Trophy, Book, BarChart3, Settings, Pickaxe } from 'lucide-react';
+import { DailyRewards } from './components/DailyRewards';
+import { ProgressionPanel } from './components/ProgressionPanel';
+import { OfflineProgress } from './components/OfflineProgress';
+import { BulkActions } from './components/BulkActions';
+import { Shield, Package, User, Play, RotateCcw, Brain, Crown, Trophy, Book, BarChart3, Settings, Pickaxe, Gift, TrendingUp, Package2 } from 'lucide-react';
 
 type GameView = 'stats' | 'shop' | 'inventory' | 'research' | 'mining';
-type ModalView = 'achievements' | 'collection' | 'statistics' | 'gameMode' | 'pokyegMarket' | 'tutorial' | 'cheats' | 'resetConfirm' | 'yojefMarket' | null;
+type ModalView = 'achievements' | 'collection' | 'statistics' | 'gameMode' | 'pokyegMarket' | 'tutorial' | 'cheats' | 'resetConfirm' | 'yojefMarket' | 'dailyRewards' | 'progression' | 'offlineProgress' | 'bulkActions' | null;
 
 function App() {
   const {
@@ -49,6 +53,12 @@ function App() {
     equipRelic,
     unequipRelic,
     sellRelic,
+    claimDailyReward,
+    upgradeSkill,
+    prestige,
+    claimOfflineRewards,
+    bulkSell,
+    bulkUpgrade,
   } = useGameState();
 
   const [currentView, setCurrentView] = useState<GameView>('stats');
@@ -64,6 +74,18 @@ function App() {
         </div>
       </div>
     );
+  }
+
+  // Show offline progress modal if there are rewards
+  if (gameState.offlineProgress.offlineCoins > 0 || gameState.offlineProgress.offlineGems > 0) {
+    if (currentModal !== 'offlineProgress') {
+      setCurrentModal('offlineProgress');
+    }
+  }
+
+  // Show daily rewards modal if available
+  if (gameState.dailyRewards.availableReward && currentModal !== 'dailyRewards' && currentModal !== 'offlineProgress') {
+    setCurrentModal('dailyRewards');
   }
 
   // Show welcome screen for new players
@@ -87,6 +109,8 @@ function App() {
                 <li>• Explore multiple game modes and challenges</li>
                 <li>• Progress through infinite zones of adventure</li>
                 <li>• Discover ancient relics in the Yojef Market</li>
+                <li>• Level up and unlock powerful skills</li>
+                <li>• Earn daily rewards and offline progress</li>
               </ul>
             </div>
           </div>
@@ -143,6 +167,36 @@ function App() {
               playerTags={gameState.playerTags}
             />
             
+            {/* Progression Display */}
+            <div className="bg-gradient-to-r from-indigo-900/50 to-purple-900/50 p-3 sm:p-4 rounded-lg border border-indigo-500/50">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-white font-bold text-sm sm:text-base">Character Level</h3>
+                <button
+                  onClick={() => setCurrentModal('progression')}
+                  className="text-indigo-400 hover:text-indigo-300 transition-colors"
+                >
+                  <TrendingUp className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-indigo-400 font-bold text-lg">Lv.{gameState.progression.level}</span>
+                <div className="flex-1">
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${(gameState.progression.experience / gameState.progression.experienceToNext) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-300 mt-1">
+                    {gameState.progression.experience}/{gameState.progression.experienceToNext} XP
+                  </p>
+                </div>
+                <span className="text-yellow-400 font-semibold text-sm">
+                  SP: {gameState.progression.skillPoints}
+                </span>
+              </div>
+            </div>
+            
             {/* Knowledge Streak Display */}
             {gameState.knowledgeStreak.current > 0 && (
               <div className="bg-gradient-to-r from-yellow-900 to-orange-900 p-3 sm:p-4 rounded-lg border border-yellow-500/50">
@@ -164,20 +218,26 @@ function App() {
             <div className="text-center space-y-3 sm:space-y-4">
               <button
                 onClick={startCombat}
-                disabled={gameState.playerStats.hp <= 0}
+                disabled={gameState.playerStats.hp <= 0 || (gameState.gameMode.current === 'survival' && gameState.gameMode.survivalLives <= 0)}
                 className={`w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-bold text-white transition-all duration-200 transform flex items-center gap-3 justify-center text-sm sm:text-base ${
-                  gameState.playerStats.hp > 0
+                  gameState.playerStats.hp > 0 && (gameState.gameMode.current !== 'survival' || gameState.gameMode.survivalLives > 0)
                     ? 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 hover:scale-105 shadow-lg hover:shadow-green-500/25'
                     : 'bg-gray-600 cursor-not-allowed'
                 }`}
               >
                 <Play className="w-4 h-4 sm:w-5 sm:h-5" />
-                {gameState.playerStats.hp <= 0 ? 'You are defeated!' : 'Start Adventure'}
+                {gameState.playerStats.hp <= 0 
+                  ? 'You are defeated!' 
+                  : gameState.gameMode.current === 'survival' && gameState.gameMode.survivalLives <= 0
+                    ? 'No lives remaining!'
+                    : 'Start Adventure'}
               </button>
               
-              {gameState.playerStats.hp <= 0 && (
+              {(gameState.playerStats.hp <= 0 || (gameState.gameMode.current === 'survival' && gameState.gameMode.survivalLives <= 0)) && (
                 <p className="text-red-400 mt-2 text-xs sm:text-sm">
-                  Visit the shop to get better equipment and try again!
+                  {gameState.gameMode.current === 'survival' && gameState.gameMode.survivalLives <= 0
+                    ? 'Change game mode or reset to continue!'
+                    : 'Visit the shop to get better equipment and try again!'}
                 </p>
               )}
               
@@ -200,6 +260,14 @@ function App() {
                 >
                   <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
                   Game Mode
+                </button>
+                
+                <button
+                  onClick={() => setCurrentModal('dailyRewards')}
+                  className="px-3 sm:px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 transition-all duration-200 flex items-center gap-2 justify-center text-xs sm:text-sm"
+                >
+                  <Gift className="w-3 h-3 sm:w-4 sm:h-4" />
+                  Daily Rewards
                 </button>
                 
                 <button
@@ -285,7 +353,7 @@ function App() {
         );
       case 'gameMode':
         return (
-          <GameModeSelector
+          <EnhancedGameModes
             currentMode={gameState.gameMode}
             onSelectMode={setGameMode}
             onClose={() => setCurrentModal(null)}
@@ -325,6 +393,42 @@ function App() {
             nextRefresh={gameState.yojefMarket.nextRefresh}
           />
         );
+      case 'dailyRewards':
+        return (
+          <DailyRewards
+            dailyRewards={gameState.dailyRewards}
+            onClaimReward={claimDailyReward}
+            onClose={() => setCurrentModal(null)}
+          />
+        );
+      case 'progression':
+        return (
+          <ProgressionPanel
+            progression={gameState.progression}
+            onUpgradeSkill={upgradeSkill}
+            onPrestige={prestige}
+            onClose={() => setCurrentModal(null)}
+          />
+        );
+      case 'offlineProgress':
+        return (
+          <OfflineProgress
+            offlineProgress={gameState.offlineProgress}
+            onClaimOfflineRewards={claimOfflineRewards}
+            onClose={() => setCurrentModal(null)}
+          />
+        );
+      case 'bulkActions':
+        return (
+          <BulkActions
+            weapons={gameState.inventory.weapons}
+            armor={gameState.inventory.armor}
+            gems={gameState.gems}
+            onBulkSell={bulkSell}
+            onBulkUpgrade={bulkUpgrade}
+            onClose={() => setCurrentModal(null)}
+          />
+        );
       case 'resetConfirm':
         return (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
@@ -345,6 +449,8 @@ function App() {
                     <li>• Research levels and statistics</li>
                     <li>• Collection book progress</li>
                     <li>• Player tags and streaks</li>
+                    <li>• Character level and skills</li>
+                    <li>• Daily reward streaks</li>
                   </ul>
                 </div>
                 <p className="text-red-400 font-bold text-sm mb-6">
@@ -394,6 +500,13 @@ function App() {
                 <Crown className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-yellow-400 animate-pulse" />
               )}
             </div>
+            <button
+              onClick={() => setCurrentModal('bulkActions')}
+              className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors text-sm"
+            >
+              <Package2 className="w-4 h-4" />
+              Bulk
+            </button>
           </div>
           
           {/* Quick Stats Bar */}
@@ -407,7 +520,7 @@ function App() {
             </button>
             
             <button
-              onClick={() => setCurrentModal('yojefMarket')}
+              onClick={() => setCurrentModal('collection')}
               className="flex items-center gap-1 text-indigo-300 hover:text-indigo-200 transition-colors"
             >
               <Book className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -421,6 +534,24 @@ function App() {
               <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>{Math.round((gameState.statistics.correctAnswers / Math.max(gameState.statistics.totalQuestionsAnswered, 1)) * 100)}%</span>
             </button>
+
+            <button
+              onClick={() => setCurrentModal('progression')}
+              className="flex items-center gap-1 text-green-300 hover:text-green-200 transition-colors"
+            >
+              <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Lv.{gameState.progression.level}</span>
+            </button>
+
+            {gameState.dailyRewards.availableReward && (
+              <button
+                onClick={() => setCurrentModal('dailyRewards')}
+                className="flex items-center gap-1 text-green-300 hover:text-green-200 transition-colors animate-pulse"
+              >
+                <Gift className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>Daily!</span>
+              </button>
+            )}
           </div>
           
           {/* Navigation */}

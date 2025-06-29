@@ -19,6 +19,9 @@ export interface GameState {
   mining: Mining;
   yojefMarket: YojefMarket;
   playerTags: PlayerTag[];
+  dailyRewards: DailyRewards;
+  progression: ProgressionSystem;
+  offlineProgress: OfflineProgress;
 }
 
 export interface PlayerStats {
@@ -107,6 +110,8 @@ export interface Enemy {
   isPoisoned?: boolean;
   poisonTurns?: number;
   canDropItems?: boolean;
+  isBoss?: boolean;
+  specialAbility?: string;
 }
 
 export interface ChestReward {
@@ -153,10 +158,13 @@ export interface KnowledgeStreak {
 }
 
 export interface GameMode {
-  current: 'normal' | 'blitz' | 'bloodlust' | 'crazy';
+  current: 'normal' | 'blitz' | 'bloodlust' | 'crazy' | 'survival' | 'timeAttack' | 'boss';
   speedModeActive: boolean;
   survivalLives: number;
   maxSurvivalLives: number;
+  timeAttackScore: number;
+  timeAttackTimeLeft: number;
+  bossProgress: number;
 }
 
 export interface Statistics {
@@ -219,6 +227,45 @@ export interface PlayerTag {
   unlocked: boolean;
   unlockedAt?: Date;
   color: string;
+}
+
+export interface DailyRewards {
+  lastClaimDate: Date | null;
+  currentStreak: number;
+  maxStreak: number;
+  availableReward: DailyReward | null;
+  rewardHistory: DailyReward[];
+}
+
+export interface DailyReward {
+  day: number;
+  coins: number;
+  gems: number;
+  items?: (Weapon | Armor)[];
+  special?: string;
+  claimed: boolean;
+  claimDate?: Date;
+}
+
+export interface ProgressionSystem {
+  level: number;
+  experience: number;
+  experienceToNext: number;
+  skillPoints: number;
+  unlockedSkills: string[];
+  prestigeLevel: number;
+  prestigePoints: number;
+  masteryLevels: {
+    [category: string]: number;
+  };
+}
+
+export interface OfflineProgress {
+  lastSaveTime: Date;
+  offlineCoins: number;
+  offlineGems: number;
+  offlineTime: number;
+  maxOfflineHours: number;
 }
 
 export interface TriviaQuestion {

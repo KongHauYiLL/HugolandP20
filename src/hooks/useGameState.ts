@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { GameState, PlayerStats, Inventory, Enemy, Weapon, Armor, ChestReward, Research, Achievement, CollectionBook, KnowledgeStreak, GameMode, Statistics, CheatSettings, Mining, RelicItem, PlayerTag } from '../types/game';
+import { GameState, PlayerStats, Inventory, Enemy, Weapon, Armor, ChestReward, Research, Achievement, CollectionBook, KnowledgeStreak, GameMode, Statistics, CheatSettings, Mining, RelicItem, PlayerTag, DailyRewards, ProgressionSystem, OfflineProgress } from '../types/game';
 import { generateWeapon, generateArmor, generateEnemy, generateMythicalWeapon, generateMythicalArmor, calculateResearchBonus, calculateResearchCost, getChestRarityWeights, generateRelicItem, canRepairWithAnvil, repairWithAnvil } from '../utils/gameUtils';
 import { checkAchievements, initializeAchievements } from '../utils/achievements';
 import { checkPlayerTags, initializePlayerTags } from '../utils/playerTags';
@@ -57,6 +57,9 @@ const initialGameMode: GameMode = {
   speedModeActive: false,
   survivalLives: 3,
   maxSurvivalLives: 3,
+  timeAttackScore: 0,
+  timeAttackTimeLeft: 60,
+  bossProgress: 0,
 };
 
 const initialStatistics: Statistics = {
@@ -89,6 +92,33 @@ const initialMining: Mining = {
   },
   totalGemsMined: 0,
   totalShinyGemsMined: 0,
+};
+
+const initialDailyRewards: DailyRewards = {
+  lastClaimDate: null,
+  currentStreak: 0,
+  maxStreak: 0,
+  availableReward: null,
+  rewardHistory: [],
+};
+
+const initialProgression: ProgressionSystem = {
+  level: 1,
+  experience: 0,
+  experienceToNext: 100,
+  skillPoints: 0,
+  unlockedSkills: [],
+  prestigeLevel: 0,
+  prestigePoints: 0,
+  masteryLevels: {},
+};
+
+const initialOfflineProgress: OfflineProgress = {
+  lastSaveTime: new Date(),
+  offlineCoins: 0,
+  offlineGems: 0,
+  offlineTime: 0,
+  maxOfflineHours: 8,
 };
 
 const generateYojefMarketItems = (): RelicItem[] => {
@@ -127,6 +157,9 @@ const initialGameState: GameState = {
     nextRefresh: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
   },
   playerTags: initializePlayerTags(),
+  dailyRewards: initialDailyRewards,
+  progression: initialProgression,
+  offlineProgress: initialOfflineProgress,
 };
 
 export const useGameState = () => {
@@ -186,6 +219,99 @@ export const useGameState = () => {
     }, 1000);
 
     return () => clearInterval(interval);
+  }, []);
+
+  // Daily rewards check
+  useEffect(() => {
+    const checkDailyRewards = () => {
+      setGameState(prev => {
+        const now = new Date();
+        const lastClaim = prev.dailyRewards.lastClaimDate ? new Date(prev.dailyRewards.lastClaimDate) : null;
+        
+        if (!lastClaim || now.getDate() !== lastClaim.getDate() || now.getMonth() !== lastClaim.getMonth()) {
+          const daysSinceLastClaim = lastClaim ? Math.floor((now.getTime() - lastClaim.getTime()) / (1000 * 60 * 60 * 24)) : 1;
+          
+          let newStreak = prev.dailyRewards.currentStreak;
+          if (daysSinceLastClaim === 1) {
+            newStreak += 1;
+          } else if (daysSinceLastClaim > 1) {
+            newStreak = 1; // Reset streak if more than 1 day passed
+          }
+          
+          const rewardDay = Math.min(newStreak, 14); // Cap at 14 days
+          const baseCoins = 50 + (rewardDay * 25);
+          const baseGems = 5 + Math.floor(rewardDay / 2);
+          
+          return {
+            ...prev,
+            dailyRewards: {
+              ...prev.dailyRewards,
+              currentStreak: newStreak,
+              maxStreak: Math.max(prev.dailyRewards.maxStreak, newStreak),
+              availableReward: {
+                day: rewardDay,
+                coins: baseCoins,
+                gems: baseGems,
+                special: rewardDay === 7 ? 'Legendary Chest' : rewardDay === 14 ? 'Mythical Item' : undefined,
+                claimed: false,
+              },
+            },
+          };
+        }
+        
+        return prev;
+      });
+    };
+
+    checkDailyRewards();
+    const interval = setInterval(checkDailyRewards, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  // Calculate offline progress
+  useEffect(() => {
+    const calculateOfflineProgress = () => {
+      setGameState(prev => {
+        const now = new Date();
+        const lastSave = new Date(prev.offlineProgress.lastSaveTime);
+        const offlineTimeSeconds = Math.floor((now.getTime() - lastSave.getTime()) / 1000);
+        const maxOfflineSeconds = prev.offlineProgress.maxOfflineHours * 3600;
+        
+        if (offlineTimeSeconds > 300) { // Only show if offline for more than 5 minutes
+          const actualOfflineTime = Math.min(offlineTimeSeconds, maxOfflineSeconds);
+          const offlineHours = actualOfflineTime / 3600;
+          
+          // Calculate offline rewards based on research levels
+          const researchBonus = (prev.research.atk.level + prev.research.def.level + prev.research.hp.level) * 0.1;
+          const baseCoinsPerHour = 10 + (prev.zone * 2);
+          const baseGemsPerHour = 1 + Math.floor(prev.zone / 10);
+          
+          const offlineCoins = Math.floor(baseCoinsPerHour * offlineHours * (1 + researchBonus));
+          const offlineGems = Math.floor(baseGemsPerHour * offlineHours * (1 + researchBonus));
+          
+          return {
+            ...prev,
+            offlineProgress: {
+              ...prev.offlineProgress,
+              offlineCoins,
+              offlineGems,
+              offlineTime: actualOfflineTime,
+              lastSaveTime: now,
+            },
+          };
+        }
+        
+        return {
+          ...prev,
+          offlineProgress: {
+            ...prev.offlineProgress,
+            lastSaveTime: now,
+          },
+        };
+      });
+    };
+
+    calculateOfflineProgress();
   }, []);
 
   // Load game state from storage
@@ -248,6 +374,9 @@ export const useGameState = () => {
             yojefMarket: yojefMarket,
             playerTags: parsedState.playerTags || initializePlayerTags(),
             shinyGems: parsedState.shinyGems || 0,
+            dailyRewards: parsedState.dailyRewards || initialDailyRewards,
+            progression: parsedState.progression || initialProgression,
+            offlineProgress: parsedState.offlineProgress || initialOfflineProgress,
             inventory: {
               ...initialInventory,
               ...parsedState.inventory,
@@ -297,6 +426,10 @@ export const useGameState = () => {
             currentEnemy: null,
             inCombat: false,
             combatLog: [],
+            offlineProgress: {
+              ...gameState.offlineProgress,
+              lastSaveTime: new Date(),
+            },
           };
           await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
         } catch (error) {
@@ -374,6 +507,33 @@ export const useGameState = () => {
         },
       },
     }));
+  }, []);
+
+  const updateProgression = useCallback((experienceGained: number) => {
+    setGameState(prev => {
+      let newExperience = prev.progression.experience + experienceGained;
+      let newLevel = prev.progression.level;
+      let newSkillPoints = prev.progression.skillPoints;
+      let experienceToNext = prev.progression.experienceToNext;
+
+      while (newExperience >= experienceToNext) {
+        newExperience -= experienceToNext;
+        newLevel += 1;
+        newSkillPoints += 1;
+        experienceToNext = Math.floor(100 * Math.pow(1.1, newLevel - 1));
+      }
+
+      return {
+        ...prev,
+        progression: {
+          ...prev.progression,
+          level: newLevel,
+          experience: newExperience,
+          experienceToNext,
+          skillPoints: newSkillPoints,
+        },
+      };
+    });
   }, []);
 
   const checkAndUnlockAchievements = useCallback(() => {
@@ -488,13 +648,15 @@ export const useGameState = () => {
     });
   }, []);
 
-  const setGameMode = useCallback((mode: 'normal' | 'blitz' | 'bloodlust' | 'crazy') => {
+  const setGameMode = useCallback((mode: 'normal' | 'blitz' | 'bloodlust' | 'crazy' | 'survival' | 'timeAttack' | 'boss') => {
     setGameState(prev => ({
       ...prev,
       gameMode: {
         ...prev.gameMode,
         current: mode,
         speedModeActive: mode === 'blitz' || mode === 'bloodlust',
+        survivalLives: mode === 'survival' ? 3 : prev.gameMode.survivalLives,
+        timeAttackTimeLeft: mode === 'timeAttack' ? 60 : prev.gameMode.timeAttackTimeLeft,
       },
     }));
     updatePlayerStats();
@@ -561,6 +723,180 @@ export const useGameState = () => {
 
     return true;
   }, []);
+
+  const claimDailyReward = useCallback((): boolean => {
+    setGameState(prev => {
+      if (!prev.dailyRewards.availableReward) return prev;
+
+      const reward = prev.dailyRewards.availableReward;
+      
+      return {
+        ...prev,
+        coins: prev.coins + reward.coins,
+        gems: prev.gems + reward.gems,
+        dailyRewards: {
+          ...prev.dailyRewards,
+          lastClaimDate: new Date(),
+          availableReward: null,
+          rewardHistory: [...prev.dailyRewards.rewardHistory, { ...reward, claimed: true, claimDate: new Date() }],
+        },
+        statistics: {
+          ...prev.statistics,
+          coinsEarned: prev.statistics.coinsEarned + reward.coins,
+          gemsEarned: prev.statistics.gemsEarned + reward.gems,
+        },
+      };
+    });
+
+    return true;
+  }, []);
+
+  const upgradeSkill = useCallback((skillId: string): boolean => {
+    setGameState(prev => {
+      const skillCosts: { [key: string]: number } = {
+        combat_mastery: 1,
+        knowledge_boost: 2,
+        treasure_hunter: 2,
+        durability_expert: 3,
+        streak_master: 3,
+        health_regeneration: 4,
+      };
+
+      const cost = skillCosts[skillId] || 1;
+      if (prev.progression.skillPoints < cost) return prev;
+
+      return {
+        ...prev,
+        progression: {
+          ...prev.progression,
+          skillPoints: prev.progression.skillPoints - cost,
+          unlockedSkills: [...prev.progression.unlockedSkills, skillId],
+        },
+      };
+    });
+
+    return true;
+  }, []);
+
+  const prestige = useCallback((): boolean => {
+    setGameState(prev => {
+      if (prev.progression.level < 50) return prev;
+
+      const prestigeReward = Math.floor(prev.progression.level / 10);
+
+      return {
+        ...prev,
+        progression: {
+          ...prev.progression,
+          level: 1,
+          experience: 0,
+          experienceToNext: 100,
+          skillPoints: 0,
+          unlockedSkills: [],
+          prestigeLevel: prev.progression.prestigeLevel + 1,
+          prestigePoints: prev.progression.prestigePoints + prestigeReward,
+        },
+      };
+    });
+
+    return true;
+  }, []);
+
+  const claimOfflineRewards = useCallback(() => {
+    setGameState(prev => ({
+      ...prev,
+      coins: prev.coins + prev.offlineProgress.offlineCoins,
+      gems: prev.gems + prev.offlineProgress.offlineGems,
+      statistics: {
+        ...prev.statistics,
+        coinsEarned: prev.statistics.coinsEarned + prev.offlineProgress.offlineCoins,
+        gemsEarned: prev.statistics.gemsEarned + prev.offlineProgress.offlineGems,
+      },
+      offlineProgress: {
+        ...prev.offlineProgress,
+        offlineCoins: 0,
+        offlineGems: 0,
+        offlineTime: 0,
+      },
+    }));
+  }, []);
+
+  const bulkSell = useCallback((itemIds: string[], type: 'weapon' | 'armor') => {
+    setGameState(prev => {
+      const items = type === 'weapon' ? prev.inventory.weapons : prev.inventory.armor;
+      const itemsToSell = items.filter(item => itemIds.includes(item.id));
+      const totalValue = itemsToSell.reduce((sum, item) => sum + item.sellPrice, 0);
+
+      if (type === 'weapon') {
+        return {
+          ...prev,
+          coins: prev.coins + totalValue,
+          inventory: {
+            ...prev.inventory,
+            weapons: prev.inventory.weapons.filter(w => !itemIds.includes(w.id)),
+          },
+        };
+      } else {
+        return {
+          ...prev,
+          coins: prev.coins + totalValue,
+          inventory: {
+            ...prev.inventory,
+            armor: prev.inventory.armor.filter(a => !itemIds.includes(a.id)),
+          },
+        };
+      }
+    });
+  }, []);
+
+  const bulkUpgrade = useCallback((itemIds: string[], type: 'weapon' | 'armor') => {
+    setGameState(prev => {
+      const items = type === 'weapon' ? prev.inventory.weapons : prev.inventory.armor;
+      const itemsToUpgrade = items.filter(item => itemIds.includes(item.id));
+      const totalCost = itemsToUpgrade.reduce((sum, item) => sum + item.upgradeCost, 0);
+
+      if (prev.gems < totalCost && !prev.cheats.infiniteGems) return prev;
+
+      if (type === 'weapon') {
+        const updatedWeapons = prev.inventory.weapons.map(w =>
+          itemIds.includes(w.id)
+            ? { ...w, level: w.level + 1, upgradeCost: Math.floor(w.upgradeCost * 1.5), sellPrice: Math.floor(w.sellPrice * 1.2) }
+            : w
+        );
+
+        return {
+          ...prev,
+          gems: prev.cheats.infiniteGems ? prev.gems : prev.gems - totalCost,
+          inventory: {
+            ...prev.inventory,
+            weapons: updatedWeapons,
+            currentWeapon: prev.inventory.currentWeapon && itemIds.includes(prev.inventory.currentWeapon.id)
+              ? updatedWeapons.find(w => w.id === prev.inventory.currentWeapon?.id) || null
+              : prev.inventory.currentWeapon,
+          },
+        };
+      } else {
+        const updatedArmor = prev.inventory.armor.map(a =>
+          itemIds.includes(a.id)
+            ? { ...a, level: a.level + 1, upgradeCost: Math.floor(a.upgradeCost * 1.5), sellPrice: Math.floor(a.sellPrice * 1.2) }
+            : a
+        );
+
+        return {
+          ...prev,
+          gems: prev.cheats.infiniteGems ? prev.gems : prev.gems - totalCost,
+          inventory: {
+            ...prev.inventory,
+            armor: updatedArmor,
+            currentArmor: prev.inventory.currentArmor && itemIds.includes(prev.inventory.currentArmor.id)
+              ? updatedArmor.find(a => a.id === prev.inventory.currentArmor?.id) || null
+              : prev.inventory.currentArmor,
+          },
+        };
+      }
+    });
+    updatePlayerStats();
+  }, [updatePlayerStats]);
 
   const discardItem = useCallback((itemId: string, type: 'weapon' | 'armor') => {
     setGameState(prev => ({
@@ -950,14 +1286,34 @@ export const useGameState = () => {
   const startCombat = useCallback(() => {
     let enemy = generateEnemy(gameState.zone);
     
-    if (gameState.gameMode.current === 'crazy') {
-      enemy = {
-        ...enemy,
-        hp: enemy.hp * 3,
-        maxHp: enemy.maxHp * 3,
-        atk: enemy.atk * 3,
-        def: enemy.def * 2,
-      };
+    // Apply game mode modifiers
+    switch (gameState.gameMode.current) {
+      case 'crazy':
+        enemy = {
+          ...enemy,
+          hp: enemy.hp * 3,
+          maxHp: enemy.maxHp * 3,
+          atk: enemy.atk * 3,
+          def: enemy.def * 2,
+        };
+        break;
+      case 'boss':
+        enemy = {
+          ...enemy,
+          name: `Boss ${enemy.name}`,
+          hp: enemy.hp * 2,
+          maxHp: enemy.maxHp * 2,
+          atk: Math.floor(enemy.atk * 1.5),
+          def: Math.floor(enemy.def * 1.5),
+          isBoss: true,
+          specialAbility: 'Regeneration',
+        };
+        break;
+      case 'survival':
+        if (gameState.gameMode.survivalLives <= 0) {
+          return; // Can't start combat with no lives
+        }
+        break;
     }
     
     setGameState(prev => ({
@@ -966,11 +1322,11 @@ export const useGameState = () => {
       inCombat: true,
       playerStats: { 
         ...prev.playerStats, 
-        hp: prev.playerStats.maxHp
+        hp: prev.gameMode.current === 'survival' ? prev.playerStats.hp : prev.playerStats.maxHp
       },
       combatLog: [`You encounter a ${enemy.name} in Zone ${enemy.zone}!`],
     }));
-  }, [gameState.zone, gameState.gameMode.current]);
+  }, [gameState.zone, gameState.gameMode]);
 
   const attack = useCallback((hit: boolean, category?: string) => {
     setGameState(prev => {
@@ -978,7 +1334,27 @@ export const useGameState = () => {
 
       if (category) {
         updateStatistics(category, hit);
+        
+        // Update mastery levels
+        const masteryGain = hit ? 1 : 0;
+        const updatedMasteryLevels = {
+          ...prev.progression.masteryLevels,
+          [category]: (prev.progression.masteryLevels[category] || 0) + masteryGain,
+        };
+        
+        // Update progression with experience
+        const experienceGain = hit ? 10 + prev.zone : 5;
+        updateProgression(experienceGain);
+        
+        setGameState(current => ({
+          ...current,
+          progression: {
+            ...current.progression,
+            masteryLevels: updatedMasteryLevels,
+          },
+        }));
       }
+      
       updateKnowledgeStreak(hit);
 
       let newCombatLog = [...prev.combatLog];
@@ -1033,6 +1409,14 @@ export const useGameState = () => {
             case 'crazy':
               coinMultiplier = 6;
               gemMultiplier = 6;
+              break;
+            case 'boss':
+              coinMultiplier = 2;
+              gemMultiplier = 2;
+              break;
+            case 'survival':
+              coinMultiplier = 1.5;
+              gemMultiplier = 1.2;
               break;
           }
 
@@ -1100,12 +1484,22 @@ export const useGameState = () => {
           playerWon = false;
           newCombatLog.push(`You were defeated by the ${prev.currentEnemy.name}...`);
           
+          // Handle survival mode
+          let updatedGameMode = prev.gameMode;
+          if (prev.gameMode.current === 'survival') {
+            updatedGameMode = {
+              ...prev.gameMode,
+              survivalLives: prev.gameMode.survivalLives - 1,
+            };
+          }
+          
           return {
             ...prev,
             currentEnemy: null,
             inCombat: false,
             combatLog: newCombatLog,
             playerStats: { ...prev.playerStats, hp: newPlayerHp },
+            gameMode: updatedGameMode,
           };
         }
 
@@ -1122,7 +1516,7 @@ export const useGameState = () => {
       checkAndUnlockAchievements();
       checkAndUnlockPlayerTags();
     }, 100);
-  }, [updateStatistics, updateKnowledgeStreak, checkAndUnlockAchievements, checkAndUnlockPlayerTags, updateCollectionBook]);
+  }, [updateStatistics, updateKnowledgeStreak, updateProgression, checkAndUnlockAchievements, checkAndUnlockPlayerTags, updateCollectionBook]);
 
   const resetGame = useCallback(async () => {
     try {
@@ -1170,5 +1564,11 @@ export const useGameState = () => {
     equipRelic,
     unequipRelic,
     sellRelic,
+    claimDailyReward,
+    upgradeSkill,
+    prestige,
+    claimOfflineRewards,
+    bulkSell,
+    bulkUpgrade,
   };
 };
