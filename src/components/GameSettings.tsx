@@ -1,6 +1,7 @@
 import React from 'react';
-import { Settings, X, Eye, Moon, Sun, Globe, Volume2, VolumeX, Bell, BellOff } from 'lucide-react';
+import { Settings, X, Eye, Moon, Sun, Globe, Bell, BellOff } from 'lucide-react';
 import { GameSettings as SettingsType } from '../types/game';
+import { getTranslation, t } from '../utils/translations';
 
 interface GameSettingsProps {
   settings: SettingsType;
@@ -13,6 +14,8 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onUpdateSettings,
   onClose
 }) => {
+  const translation = getTranslation(settings.language);
+  
   const languages = [
     { code: 'en', name: 'English', flag: '🇺🇸' },
     { code: 'es', name: 'Español', flag: '🇪🇸' },
@@ -36,18 +39,22 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-gradient-to-br from-gray-900 to-slate-900 p-4 sm:p-6 rounded-lg border border-gray-500/50 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+      <div className={`bg-gradient-to-br ${settings.darkMode ? 'from-gray-900 to-slate-900' : 'from-gray-100 to-white'} p-4 sm:p-6 rounded-lg border ${settings.darkMode ? 'border-gray-500/50' : 'border-gray-300'} max-w-2xl w-full max-h-[80vh] overflow-y-auto`}>
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
-            <Settings className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
+            <Settings className={`w-6 h-6 sm:w-8 sm:h-8 ${settings.darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
             <div>
-              <h2 className="text-white font-bold text-lg sm:text-xl">Game Settings</h2>
-              <p className="text-gray-300 text-sm">Customize your game experience</p>
+              <h2 className={`${settings.darkMode ? 'text-white' : 'text-gray-900'} font-bold text-lg sm:text-xl`}>
+                {translation.settings.title}
+              </h2>
+              <p className={`${settings.darkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>
+                {translation.settings.subtitle}
+              </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className={`${settings.darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
           >
             <X className="w-5 h-5" />
           </button>
@@ -55,23 +62,38 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
 
         <div className="space-y-6">
           {/* Visual Settings */}
-          <div className="bg-black/30 p-4 rounded-lg border border-gray-600/50">
-            <h3 className="text-white font-bold text-lg mb-4">Visual Settings</h3>
+          <div className={`${settings.darkMode ? 'bg-black/30' : 'bg-gray-50'} p-4 rounded-lg border ${settings.darkMode ? 'border-gray-600/50' : 'border-gray-200'}`}>
+            <h3 className={`${settings.darkMode ? 'text-white' : 'text-gray-900'} font-bold text-lg mb-4`}>
+              {translation.settings.visual}
+            </h3>
             
             <div className="space-y-4">
               {/* Colorblind Mode */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Eye className="w-5 h-5 text-blue-400" />
+                  <Eye className={`w-5 h-5 ${settings.colorblindMode ? 'text-blue-400' : settings.darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
                   <div>
-                    <p className="text-white font-semibold">Colorblind Mode</p>
-                    <p className="text-gray-400 text-sm">Enhanced contrast and patterns</p>
+                    <p className={`${settings.darkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>
+                      {translation.settings.colorblind}
+                    </p>
+                    <p className={`${settings.darkMode ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
+                      {translation.settings.colorblindDesc}
+                    </p>
+                    {settings.colorblindMode && (
+                      <div className="mt-2 flex items-center gap-2 text-xs">
+                        <span className="text-gray-300 font-normal">Common ●</span>
+                        <span className="text-cyan-300 font-medium">Rare ◆</span>
+                        <span className="text-indigo-300 font-semibold">Epic ▲</span>
+                        <span className="text-amber-300 font-bold">Legendary ★</span>
+                        <span className="text-pink-300 font-black">Mythical ♦</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <button
                   onClick={() => toggleSetting('colorblindMode')}
                   className={`w-12 h-6 rounded-full transition-all ${
-                    settings.colorblindMode ? 'bg-green-500' : 'bg-gray-600'
+                    settings.colorblindMode ? 'bg-blue-500' : settings.darkMode ? 'bg-gray-600' : 'bg-gray-300'
                   }`}
                 >
                   <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
@@ -86,11 +108,15 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
                   {settings.darkMode ? (
                     <Moon className="w-5 h-5 text-indigo-400" />
                   ) : (
-                    <Sun className="w-5 h-5 text-yellow-400" />
+                    <Sun className="w-5 h-5 text-yellow-500" />
                   )}
                   <div>
-                    <p className="text-white font-semibold">Dark Mode</p>
-                    <p className="text-gray-400 text-sm">Toggle dark/light theme</p>
+                    <p className={`${settings.darkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>
+                      {translation.settings.darkMode}
+                    </p>
+                    <p className={`${settings.darkMode ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
+                      {translation.settings.darkModeDesc}
+                    </p>
                   </div>
                 </div>
                 <button
@@ -104,63 +130,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
                   }`} />
                 </button>
               </div>
-            </div>
-          </div>
-
-          {/* Audio Settings */}
-          <div className="bg-black/30 p-4 rounded-lg border border-gray-600/50">
-            <h3 className="text-white font-bold text-lg mb-4">Audio Settings</h3>
-            
-            <div className="space-y-4">
-              {/* Sound Effects */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {settings.soundEnabled ? (
-                    <Volume2 className="w-5 h-5 text-green-400" />
-                  ) : (
-                    <VolumeX className="w-5 h-5 text-red-400" />
-                  )}
-                  <div>
-                    <p className="text-white font-semibold">Sound Effects</p>
-                    <p className="text-gray-400 text-sm">Game sound effects</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => toggleSetting('soundEnabled')}
-                  className={`w-12 h-6 rounded-full transition-all ${
-                    settings.soundEnabled ? 'bg-green-500' : 'bg-gray-600'
-                  }`}
-                >
-                  <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
-                    settings.soundEnabled ? 'translate-x-6' : 'translate-x-0.5'
-                  }`} />
-                </button>
-              </div>
-
-              {/* Background Music */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {settings.musicEnabled ? (
-                    <Volume2 className="w-5 h-5 text-purple-400" />
-                  ) : (
-                    <VolumeX className="w-5 h-5 text-red-400" />
-                  )}
-                  <div>
-                    <p className="text-white font-semibold">Background Music</p>
-                    <p className="text-gray-400 text-sm">Ambient game music</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => toggleSetting('musicEnabled')}
-                  className={`w-12 h-6 rounded-full transition-all ${
-                    settings.musicEnabled ? 'bg-purple-500' : 'bg-gray-600'
-                  }`}
-                >
-                  <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
-                    settings.musicEnabled ? 'translate-x-6' : 'translate-x-0.5'
-                  }`} />
-                </button>
-              </div>
 
               {/* Notifications */}
               <div className="flex items-center justify-between">
@@ -168,17 +137,21 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
                   {settings.notifications ? (
                     <Bell className="w-5 h-5 text-blue-400" />
                   ) : (
-                    <BellOff className="w-5 h-5 text-red-400" />
+                    <BellOff className={`w-5 h-5 ${settings.darkMode ? 'text-red-400' : 'text-red-500'}`} />
                   )}
                   <div>
-                    <p className="text-white font-semibold">Notifications</p>
-                    <p className="text-gray-400 text-sm">Game notifications</p>
+                    <p className={`${settings.darkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>
+                      {translation.settings.notifications}
+                    </p>
+                    <p className={`${settings.darkMode ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
+                      {translation.settings.notificationsDesc}
+                    </p>
                   </div>
                 </div>
                 <button
                   onClick={() => toggleSetting('notifications')}
                   className={`w-12 h-6 rounded-full transition-all ${
-                    settings.notifications ? 'bg-blue-500' : 'bg-gray-600'
+                    settings.notifications ? 'bg-blue-500' : settings.darkMode ? 'bg-gray-600' : 'bg-gray-300'
                   }`}
                 >
                   <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
@@ -190,10 +163,10 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
           </div>
 
           {/* Language Settings */}
-          <div className="bg-black/30 p-4 rounded-lg border border-gray-600/50">
-            <h3 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
+          <div className={`${settings.darkMode ? 'bg-black/30' : 'bg-gray-50'} p-4 rounded-lg border ${settings.darkMode ? 'border-gray-600/50' : 'border-gray-200'}`}>
+            <h3 className={`${settings.darkMode ? 'text-white' : 'text-gray-900'} font-bold text-lg mb-4 flex items-center gap-2`}>
               <Globe className="w-5 h-5 text-green-400" />
-              Language
+              {translation.settings.language}
             </h3>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -204,22 +177,26 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
                   className={`p-3 rounded-lg border-2 transition-all text-left ${
                     settings.language === lang.code
                       ? 'border-green-500 bg-green-900/30'
-                      : 'border-gray-600 bg-gray-800/30 hover:border-gray-500'
+                      : settings.darkMode 
+                        ? 'border-gray-600 bg-gray-800/30 hover:border-gray-500'
+                        : 'border-gray-300 bg-white hover:border-gray-400'
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{lang.flag}</span>
                     <div>
-                      <p className="text-white font-semibold text-sm">{lang.name}</p>
+                      <p className={`${settings.darkMode ? 'text-white' : 'text-gray-900'} font-semibold text-sm`}>
+                        {lang.name}
+                      </p>
                     </div>
                   </div>
                 </button>
               ))}
             </div>
             
-            <div className="mt-3 p-3 bg-yellow-900/20 rounded-lg border border-yellow-500/30">
-              <p className="text-yellow-300 text-sm">
-                🚧 Language support is coming soon! Currently only English is fully supported.
+            <div className={`mt-3 p-3 ${settings.darkMode ? 'bg-yellow-900/20' : 'bg-yellow-50'} rounded-lg border ${settings.darkMode ? 'border-yellow-500/30' : 'border-yellow-200'}`}>
+              <p className={`${settings.darkMode ? 'text-yellow-300' : 'text-yellow-700'} text-sm`}>
+                {translation.settings.languageNote}
               </p>
             </div>
           </div>
@@ -227,7 +204,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
 
         {/* Footer */}
         <div className="mt-6 text-center text-xs text-gray-500">
-          <p>Settings are automatically saved to your device.</p>
+          <p>{translation.settings.autoSaved}</p>
         </div>
       </div>
     </div>

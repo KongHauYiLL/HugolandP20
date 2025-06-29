@@ -1,4 +1,5 @@
 import { Weapon, Armor, Enemy, RelicItem } from '../types/game';
+import { getColorblindRarityClass, getRaritySymbol } from './colorblindUtils';
 
 const weaponNames = {
   common: ['Rusty Sword', 'Wooden Club', 'Stone Axe', 'Iron Dagger'],
@@ -87,7 +88,6 @@ export const generateWeapon = (forceChroma = false, forceRarity?: string, forceE
   const upgradeCostMap = { common: 5, rare: 10, epic: 20, legendary: 40, mythical: 50 };
   let baseAtk = baseAtkMap[rarity] + Math.floor(Math.random() * 10);
   
-  // Check for enchantment (5% chance or forced)
   const isEnchanted = forceEnchanted || Math.random() < 0.05;
   let enchantmentMultiplier = 1;
   
@@ -96,7 +96,7 @@ export const generateWeapon = (forceChroma = false, forceRarity?: string, forceE
     baseAtk *= 2;
   }
   
-  const sellPrice = Math.floor(baseAtk * 0.5); // 25% of original cost calculation
+  const sellPrice = Math.floor(baseAtk * 0.5);
   const maxDurability = getDurabilityByRarity(rarity);
 
   return {
@@ -144,7 +144,6 @@ export const generateArmor = (forceChroma = false, forceRarity?: string, forceEn
   const upgradeCostMap = { common: 5, rare: 10, epic: 20, legendary: 40, mythical: 50 };
   let baseDef = baseDefMap[rarity] + Math.floor(Math.random() * 5);
   
-  // Check for enchantment (5% chance or forced)
   const isEnchanted = forceEnchanted || Math.random() < 0.05;
   let enchantmentMultiplier = 1;
   
@@ -153,7 +152,7 @@ export const generateArmor = (forceChroma = false, forceRarity?: string, forceEn
     baseDef *= 2;
   }
   
-  const sellPrice = Math.floor(baseDef * 0.75); // 25% of original cost calculation
+  const sellPrice = Math.floor(baseDef * 0.75);
   const maxDurability = getDurabilityByRarity(rarity);
 
   return {
@@ -178,7 +177,6 @@ export const generateRelicItem = (): RelicItem => {
   const name = names[Math.floor(Math.random() * names.length)];
   
   if (isWeapon) {
-    // Increased base ATK from 80-120 to 120-180 (1.5x)
     const baseAtk = 120 + Math.floor(Math.random() * 60);
     return {
       id: Math.random().toString(36).substr(2, 9),
@@ -191,7 +189,6 @@ export const generateRelicItem = (): RelicItem => {
       description: 'A powerful relic weapon from ancient times'
     };
   } else {
-    // Increased base DEF from 60-90 to 90-135 (1.5x)
     const baseDef = 90 + Math.floor(Math.random() * 45);
     return {
       id: Math.random().toString(36).substr(2, 9),
@@ -218,12 +215,10 @@ export const generateEnemy = (zone: number): Enemy => {
   const nameIndex = Math.min(Math.floor((zone - 1) / 5), enemyNames.length - 1);
   const name = enemyNames[nameIndex];
   
-  // Infinite scaling formula
   let hp = 200 + (zone * 15);
   let atk = 20 + (zone * 8);
   let def = Math.floor(zone * 2);
   
-  // Exponential scaling for higher zones
   if (zone >= 10) {
     hp = Math.floor(hp * Math.pow(1.1, zone - 10));
     atk = Math.floor(atk * Math.pow(1.08, zone - 10));
@@ -244,45 +239,32 @@ export const generateEnemy = (zone: number): Enemy => {
 };
 
 export const getChestRarityWeights = (chestCost: number): number[] => {
-  // Returns weights for [common, rare, epic, legendary, mythical]
   if (chestCost >= 1000) {
-    // Legendary chest - guaranteed legendary or mythical
     return [0, 0, 0, 70, 30];
   } else if (chestCost >= 400) {
-    // Epic chest - guaranteed epic or better
     return [0, 0, 60, 30, 10];
   } else if (chestCost >= 200) {
-    // Rare chest - guaranteed rare or better
     return [0, 50, 35, 13, 2];
   } else {
-    // Basic chest - mostly common/rare
     return [60, 30, 8, 2, 0];
   }
 };
 
-export const getRarityColor = (rarity: string): string => {
-  switch (rarity) {
-    case 'common': return 'text-gray-400';
-    case 'rare': return 'text-blue-400';
-    case 'epic': return 'text-purple-400';
-    case 'legendary': return 'text-yellow-400';
-    case 'mythical': return 'text-red-600';
-    default: return 'text-gray-400';
-  }
+// Updated functions to support colorblind mode
+export const getRarityColor = (rarity: string, isColorblindMode = false): string => {
+  return getColorblindRarityClass(rarity, 'text', isColorblindMode);
 };
 
-export const getRarityBorder = (rarity: string): string => {
-  switch (rarity) {
-    case 'common': return 'border-gray-400';
-    case 'rare': return 'border-blue-400';
-    case 'epic': return 'border-purple-400';
-    case 'legendary': return 'border-yellow-400';
-    case 'mythical':  return 'border-red-600';
-    default: return 'border-gray-400';
-  }
+export const getRarityBorder = (rarity: string, isColorblindMode = false): string => {
+  return getColorblindRarityClass(rarity, 'border', isColorblindMode);
 };
 
-export const getRarityGlow = (rarity: string): string => {
+export const getRarityGlow = (rarity: string, isColorblindMode = false): string => {
+  if (isColorblindMode) {
+    // No glow effects in colorblind mode for better clarity
+    return '';
+  }
+  
   switch (rarity) {
     case 'common': return 'shadow-gray-500/20';
     case 'rare': return 'shadow-blue-500/30';
@@ -293,12 +275,17 @@ export const getRarityGlow = (rarity: string): string => {
   }
 };
 
+export const getRarityDisplayName = (rarity: string, isColorblindMode = false): string => {
+  const symbol = getRaritySymbol(rarity, isColorblindMode);
+  return symbol ? `${symbol} ${rarity.toUpperCase()}` : rarity.toUpperCase();
+};
+
 export const calculateResearchBonus = (level: number): number => {
-  return level * 10; // 10% per level
+  return level * 10;
 };
 
 export const calculateResearchCost = (level: number): number => {
-  return 100 + (level * 25); // Increasing cost
+  return 100 + (level * 25);
 };
 
 export const getRepairCost = (item: Weapon | Armor): number => {

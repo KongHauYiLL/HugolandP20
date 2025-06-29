@@ -298,8 +298,6 @@ export interface GameSettings {
   colorblindMode: boolean;
   darkMode: boolean;
   language: 'en' | 'es' | 'fr' | 'de' | 'pt' | 'it' | 'ru' | 'ja' | 'ko' | 'zh';
-  soundEnabled: boolean;
-  musicEnabled: boolean;
   notifications: boolean;
 }
 

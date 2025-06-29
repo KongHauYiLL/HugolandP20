@@ -148,8 +148,6 @@ const initialSettings: GameSettings = {
   colorblindMode: false,
   darkMode: true,
   language: 'en',
-  soundEnabled: true,
-  musicEnabled: true,
   notifications: true,
 };
 
@@ -216,22 +214,6 @@ export const useGameState = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // AFK gem mining - 2 gems per minute
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setGameState(prev => ({
-        ...prev,
-        gems: prev.gems + 2,
-        statistics: {
-          ...prev.statistics,
-          gemsEarned: prev.statistics.gemsEarned + 2,
-        },
-      }));
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   // Garden growth system
   useEffect(() => {
     const interval = setInterval(() => {
@@ -245,21 +227,21 @@ export const useGameState = () => {
         const hoursPassed = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
         
         if (hoursPassed >= 1) { // Update every hour
-          const newWaterHours = Math.max(0, prev.gardenOfGrowth.waterHoursRemaining - hoursPassed);
           const growthRate = 0.5; // 0.5cm per hour
-          const newGrowthCm = Math.min(
-            prev.gardenOfGrowth.maxGrowthCm,
-            prev.gardenOfGrowth.growthCm + (hoursPassed * growthRate)
+          const newGrowth = Math.min(
+            prev.gardenOfGrowth.growthCm + growthRate,
+            prev.gardenOfGrowth.maxGrowthCm
           );
-          const newTotalBonus = newGrowthCm * 5; // 5% per cm
+          const newWaterHours = Math.max(0, prev.gardenOfGrowth.waterHoursRemaining - 1);
+          const newBonus = newGrowth * 5; // 5% bonus per cm
 
           return {
             ...prev,
             gardenOfGrowth: {
               ...prev.gardenOfGrowth,
+              growthCm: newGrowth,
+              totalGrowthBonus: newBonus,
               waterHoursRemaining: newWaterHours,
-              growthCm: newGrowthCm,
-              totalGrowthBonus: newTotalBonus,
               lastWatered: now,
             },
           };
@@ -268,6 +250,22 @@ export const useGameState = () => {
         return prev;
       });
     }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // AFK gem mining - 2 gems per minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGameState(prev => ({
+        ...prev,
+        gems: prev.gems + 2,
+        statistics: {
+          ...prev.statistics,
+          gemsEarned: prev.statistics.gemsEarned + 2,
+        },
+      }));
+    }, 60000);
 
     return () => clearInterval(interval);
   }, []);
@@ -353,9 +351,10 @@ export const useGameState = () => {
         if (actualOfflineTime >= 300) { // 5 minutes minimum
           const offlineHours = actualOfflineTime / 3600;
           const researchBonus = 1 + (calculateResearchBonus(prev.research.atk.level) + calculateResearchBonus(prev.research.def.level) + calculateResearchBonus(prev.research.hp.level)) / 300;
+          const gardenBonus = 1 + (prev.gardenOfGrowth.totalGrowthBonus / 100);
           
-          const offlineCoins = Math.floor(offlineHours * 50 * researchBonus);
-          const offlineGems = Math.floor(offlineHours * 5 * researchBonus);
+          const offlineCoins = Math.floor(offlineHours * 50 * researchBonus * gardenBonus);
+          const offlineGems = Math.floor(offlineHours * 5 * researchBonus * gardenBonus);
           
           return {
             ...prev,
@@ -393,33 +392,7 @@ export const useGameState = () => {
         if (savedState) {
           const parsedState = JSON.parse(savedState);
           
-          // Ensure research object is properly initialized
-          const research = {
-            atk: {
-              level: parsedState.research?.atk?.level || 0,
-              totalSpent: parsedState.research?.atk?.totalSpent || 0,
-            },
-            def: {
-              level: parsedState.research?.def?.level || 0,
-              totalSpent: parsedState.research?.def?.totalSpent || 0,
-            },
-            hp: {
-              level: parsedState.research?.hp?.level || 0,
-              totalSpent: parsedState.research?.hp?.totalSpent || 0,
-            },
-          };
-          
-          // Ensure yojefMarket dates are properly converted
-          const yojefMarket = parsedState.yojefMarket ? {
-            items: parsedState.yojefMarket.items || generateYojefMarketItems(),
-            lastRefresh: new Date(parsedState.yojefMarket.lastRefresh || Date.now()),
-            nextRefresh: new Date(parsedState.yojefMarket.nextRefresh || Date.now() + 5 * 60 * 1000),
-          } : {
-            items: generateYojefMarketItems(),
-            lastRefresh: new Date(),
-            nextRefresh: new Date(Date.now() + 5 * 60 * 1000),
-          };
-          
+          // Ensure all new properties are initialized
           setGameState({
             ...initialGameState,
             ...parsedState,
@@ -435,11 +408,19 @@ export const useGameState = () => {
               ...parsedState.statistics,
               sessionStartTime: new Date(),
             },
-            research: research,
+            research: {
+              atk: parsedState.research?.atk || { level: 0, totalSpent: 0 },
+              def: parsedState.research?.def || { level: 0, totalSpent: 0 },
+              hp: parsedState.research?.hp || { level: 0, totalSpent: 0 },
+            },
             isPremium: parsedState.isPremium || parsedState.zone >= 50,
             cheats: parsedState.cheats || initialCheats,
             mining: parsedState.mining || initialMining,
-            yojefMarket: yojefMarket,
+            yojefMarket: {
+              items: parsedState.yojefMarket?.items || generateYojefMarketItems(),
+              lastRefresh: new Date(parsedState.yojefMarket?.lastRefresh || Date.now()),
+              nextRefresh: new Date(parsedState.yojefMarket?.nextRefresh || Date.now() + 5 * 60 * 1000),
+            },
             playerTags: parsedState.playerTags || initializePlayerTags(),
             shinyGems: parsedState.shinyGems || 0,
             inventory: {
@@ -676,15 +657,15 @@ export const useGameState = () => {
         ? prev.inventory.currentArmor.baseDef + (prev.inventory.currentArmor.level - 1) * 5
         : 0;
 
-      // Add relic bonuses - increased from 15/10 to 22/15 (1.5x)
+      // Add relic bonuses
       let relicAtkBonus = 0;
       let relicDefBonus = 0;
       
       prev.inventory.equippedRelics.forEach(relic => {
         if (relic.type === 'weapon' && relic.baseAtk) {
-          relicAtkBonus += relic.baseAtk + (relic.level - 1) * 22; // Increased from 15 to 22
+          relicAtkBonus += relic.baseAtk + (relic.level - 1) * 22;
         } else if (relic.type === 'armor' && relic.baseDef) {
-          relicDefBonus += relic.baseDef + (relic.level - 1) * 15; // Increased from 10 to 15
+          relicDefBonus += relic.baseDef + (relic.level - 1) * 15;
         }
       });
 
@@ -692,8 +673,8 @@ export const useGameState = () => {
       const defResearchBonus = calculateResearchBonus(prev.research.def.level);
       const hpResearchBonus = calculateResearchBonus(prev.research.hp.level);
 
-      // Add Garden of Growth bonuses
-      const gardenBonus = prev.gardenOfGrowth.totalGrowthBonus / 100; // Convert percentage to decimal
+      // Add garden bonuses
+      const gardenBonus = prev.gardenOfGrowth.totalGrowthBonus / 100;
 
       let atkMultiplier = 1 + (atkResearchBonus / 100) + gardenBonus;
       let defMultiplier = 1 + (defResearchBonus / 100) + gardenBonus;
@@ -730,6 +711,60 @@ export const useGameState = () => {
     });
   }, []);
 
+  const plantSeed = useCallback((): boolean => {
+    setGameState(prev => {
+      if (prev.gardenOfGrowth.isPlanted || prev.coins < prev.gardenOfGrowth.seedCost) {
+        return prev;
+      }
+
+      const now = new Date();
+      return {
+        ...prev,
+        coins: prev.coins - prev.gardenOfGrowth.seedCost,
+        gardenOfGrowth: {
+          ...prev.gardenOfGrowth,
+          isPlanted: true,
+          plantedAt: now,
+          lastWatered: now,
+          waterHoursRemaining: 24, // Start with 24 hours of water
+        },
+      };
+    });
+
+    return true;
+  }, []);
+
+  const buyWater = useCallback((hours: number): boolean => {
+    setGameState(prev => {
+      const cost = Math.floor((hours / 24) * prev.gardenOfGrowth.waterCost);
+      
+      if (prev.coins < cost) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        coins: prev.coins - cost,
+        gardenOfGrowth: {
+          ...prev.gardenOfGrowth,
+          waterHoursRemaining: prev.gardenOfGrowth.waterHoursRemaining + hours,
+        },
+      };
+    });
+
+    return true;
+  }, []);
+
+  const updateSettings = useCallback((newSettings: Partial<GameSettings>) => {
+    setGameState(prev => ({
+      ...prev,
+      settings: {
+        ...prev.settings,
+        ...newSettings,
+      },
+    }));
+  }, []);
+
   const setGameMode = useCallback((mode: 'normal' | 'blitz' | 'bloodlust' | 'crazy' | 'survival' | 'timeAttack' | 'boss') => {
     setGameState(prev => ({
       ...prev,
@@ -759,9 +794,7 @@ export const useGameState = () => {
   }, []);
 
   const mineGem = useCallback((x: number, y: number): { gems: number; shinyGems: number } | null => {
-    // This would be called from the Mining component with the gem node data
-    // For now, we'll simulate the mining result
-    const isShiny = Math.random() < 0.1; // 10% chance for shiny (reduced from 30%)
+    const isShiny = Math.random() < 0.1;
     const gemsEarned = isShiny ? 10 : gameState.mining.efficiency;
     const shinyGemsEarned = isShiny ? 1 : 0;
 
@@ -1022,7 +1055,6 @@ export const useGameState = () => {
               ...r, 
               level: r.level + 1, 
               upgradeCost: Math.floor(r.upgradeCost * 1.5),
-              // Increased upgrade bonuses from 15/10 to 22/15 (1.5x)
               baseAtk: r.baseAtk ? r.baseAtk + 22 : undefined,
               baseDef: r.baseDef ? r.baseDef + 15 : undefined,
             }
@@ -1087,61 +1119,6 @@ export const useGameState = () => {
     }));
     updatePlayerStats();
   }, [updatePlayerStats]);
-
-  const plantSeed = useCallback((): boolean => {
-    setGameState(prev => {
-      if (prev.gardenOfGrowth.isPlanted || prev.coins < prev.gardenOfGrowth.seedCost) {
-        return prev;
-      }
-
-      const now = new Date();
-      return {
-        ...prev,
-        coins: prev.coins - prev.gardenOfGrowth.seedCost,
-        gardenOfGrowth: {
-          ...prev.gardenOfGrowth,
-          isPlanted: true,
-          plantedAt: now,
-          lastWatered: now,
-          waterHoursRemaining: 24, // Start with 24 hours of water
-        },
-      };
-    });
-
-    return true;
-  }, []);
-
-  const buyWater = useCallback((hours: number): boolean => {
-    setGameState(prev => {
-      const cost = (hours / 24) * prev.gardenOfGrowth.waterCost;
-      
-      if (prev.coins < cost || !prev.gardenOfGrowth.isPlanted) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        coins: prev.coins - cost,
-        gardenOfGrowth: {
-          ...prev.gardenOfGrowth,
-          waterHoursRemaining: prev.gardenOfGrowth.waterHoursRemaining + hours,
-          lastWatered: new Date(),
-        },
-      };
-    });
-
-    return true;
-  }, []);
-
-  const updateSettings = useCallback((newSettings: Partial<GameSettings>) => {
-    setGameState(prev => ({
-      ...prev,
-      settings: {
-        ...prev.settings,
-        ...newSettings,
-      },
-    }));
-  }, []);
 
   const equipWeapon = useCallback((weapon: Weapon) => {
     setGameState(prev => ({
@@ -1303,14 +1280,12 @@ export const useGameState = () => {
     const bonusGems = Math.floor(Math.random() * 15) + 10;
     const items: (Weapon | Armor)[] = [];
 
-    // Get rarity weights based on chest cost
     const rarityWeights = getChestRarityWeights(chestCost);
     const rarities = ['common', 'rare', 'epic', 'legendary', 'mythical'];
 
     for (let i = 0; i < numItems; i++) {
       const isWeapon = Math.random() < 0.5;
       
-      // Select rarity based on weights
       const random = Math.random() * 100;
       let cumulative = 0;
       let selectedRarity = 'common';
@@ -1323,7 +1298,6 @@ export const useGameState = () => {
         }
       }
       
-      // 5% chance for enchanted items
       const isEnchanted = Math.random() < 0.05;
       
       const item = isWeapon ? generateWeapon(false, selectedRarity, isEnchanted) : generateArmor(false, selectedRarity, isEnchanted);
@@ -1423,7 +1397,6 @@ export const useGameState = () => {
       }
       updateKnowledgeStreak(hit);
 
-      // Award experience for answering questions
       const experienceGained = hit ? 10 : 5;
       updateProgression(experienceGained);
 
@@ -1461,13 +1434,11 @@ export const useGameState = () => {
         newEnemyHp = Math.max(0, prev.currentEnemy.hp - finalDamage);
         newCombatLog.push(`You deal ${finalDamage} damage to the ${prev.currentEnemy.name}!`);
         
-        // Check if enemy is defeated
         if (newEnemyHp <= 0) {
           combatEnded = true;
           playerWon = true;
           newCombatLog.push(`You defeated the ${prev.currentEnemy.name}!`);
           
-          // Handle victory rewards
           let coinMultiplier = 1;
           let gemMultiplier = 1;
           
@@ -1493,9 +1464,8 @@ export const useGameState = () => {
           
           newCombatLog.push(`You earned ${coinsEarned} coins and ${gemsEarned} gems!`);
           
-          // Check for item drops from zone 10+
           let droppedItems: (Weapon | Armor)[] = [];
-          if (prev.currentEnemy.canDropItems && Math.random() < 0.15) { // 15% drop chance
+          if (prev.currentEnemy.canDropItems && Math.random() < 0.15) {
             const isWeapon = Math.random() < 0.5;
             const droppedItem = isWeapon ? generateWeapon() : generateArmor();
             droppedItems.push(droppedItem);
@@ -1550,7 +1520,7 @@ export const useGameState = () => {
         if (newPlayerHp <= 0) {
           // Check for revival
           if (!prev.hasUsedRevival) {
-            newCombatLog.push(`💖 You have been revived with full health! (One-time revival used)`);
+            newCombatLog.push(`💖 You have been revived! You get one free revival!`);
             return {
               ...prev,
               playerStats: { ...prev.playerStats, hp: prev.playerStats.maxHp },
@@ -1563,12 +1533,11 @@ export const useGameState = () => {
               },
             };
           }
-
+          
           combatEnded = true;
           playerWon = false;
           newCombatLog.push(`You were defeated by the ${prev.currentEnemy.name}...`);
           
-          // Handle survival mode
           if (prev.gameMode.current === 'survival') {
             const newLives = prev.gameMode.survivalLives - 1;
             return {
