@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { GameState, PlayerStats, Inventory, Enemy, Weapon, Armor, ChestReward, Research, Achievement, CollectionBook, KnowledgeStreak, GameMode, Statistics, CheatSettings, Mining, RelicItem, PlayerTag } from '../types/game';
-import { generateWeapon, generateArmor, generateEnemy, generateMythicalWeapon, generateMythicalArmor, calculateResearchBonus, calculateResearchCost, getChestRarityWeights, generateRelicItem, canRepairWithAnvil, repairWithAnvil } from '../utils/gameUtils';
+import { GameState, PlayerStats, Inventory, Enemy, Weapon, Armor, ChestReward, Research, Achievement, CollectionBook, KnowledgeStreak, GameMode, Statistics, CheatSettings, Mining, RelicItem, PlayerTag, CombatState } from '../types/game';
+import { generateWeapon, generateArmor, generateEnemy, generateMythicalWeapon, generateMythicalArmor, calculateResearchBonus, calculateResearchCost, getChestRarityWeights, generateRelicItem, canRepairWithAnvil, repairWithAnvil, applyEnemyAbilityEffect } from '../utils/gameUtils';
 import { checkAchievements, initializeAchievements } from '../utils/achievements';
 import { checkPlayerTags, initializePlayerTags } from '../utils/playerTags';
 import AsyncStorage from '../utils/storage';
@@ -71,6 +71,8 @@ const initialStatistics: Statistics = {
   chestsOpened: 0,
   accuracyByCategory: {},
   sessionStartTime: new Date(),
+  dodgesSuccessful: 0,
+  dodgesFailed: 0,
 };
 
 const initialCheats: CheatSettings = {
@@ -89,6 +91,14 @@ const initialMining: Mining = {
   },
   totalGemsMined: 0,
   totalShinyGemsMined: 0,
+};
+
+const initialCombatState: CombatState = {
+  playerTurn: true,
+  enemyAttackPending: false,
+  dodgeWindowActive: false,
+  dodgeButtonReady: false,
+  dodgeTimeLeft: 0,
 };
 
 const generateYojefMarketItems = (): RelicItem[] => {
@@ -131,6 +141,7 @@ const initialGameState: GameState = {
 
 export const useGameState = () => {
   const [gameState, setGameState] = useState<GameState>(initialGameState);
+  const [combatState, setCombatState] = useState<CombatState>(initialCombatState);
   const [isLoading, setIsLoading] = useState(true);
 
   // Update play time
@@ -240,6 +251,8 @@ export const useGameState = () => {
               ...initialStatistics,
               ...parsedState.statistics,
               sessionStartTime: new Date(),
+              dodgesSuccessful: parsedState.statistics?.dodgesSuccessful || 0,
+              dodgesFailed: parsedState.statistics?.dodgesFailed || 0,
             },
             research: research,
             isPremium: parsedState.isPremium || parsedState.zone >= 50,
@@ -970,7 +983,66 @@ export const useGameState = () => {
       },
       combatLog: [`You encounter a ${enemy.name} in Zone ${enemy.zone}!`],
     }));
+
+    setCombatState(initialCombatState);
   }, [gameState.zone, gameState.gameMode.current]);
+
+  const handleDodge = useCallback((successful: boolean) => {
+    setGameState(prev => ({
+      ...prev,
+      statistics: {
+        ...prev.statistics,
+        dodgesSuccessful: prev.statistics.dodgesSuccessful + (successful ? 1 : 0),
+        dodgesFailed: prev.statistics.dodgesFailed + (successful ? 0 : 1),
+      },
+    }));
+
+    setCombatState(prev => ({
+      ...prev,
+      enemyAttackPending: false,
+      dodgeWindowActive: false,
+      dodgeButtonReady: false,
+      playerTurn: true,
+    }));
+  }, []);
+
+  const triggerEnemyTurn = useCallback(() => {
+    if (!gameState.currentEnemy || !gameState.inCombat) return;
+
+    setCombatState(prev => ({
+      ...prev,
+      playerTurn: false,
+      enemyAttackPending: true,
+      dodgeWindowActive: true,
+      dodgeButtonReady: false,
+      dodgeTimeLeft: 2500, // 2.5 seconds until button turns green
+    }));
+
+    // Start dodge window timer
+    setTimeout(() => {
+      setCombatState(prev => ({
+        ...prev,
+        dodgeButtonReady: true,
+        dodgeTimeLeft: 500, // 0.5 seconds to click
+      }));
+
+      // Auto-fail dodge if not clicked in time
+      setTimeout(() => {
+        setCombatState(prev => {
+          if (prev.enemyAttackPending && prev.dodgeButtonReady) {
+            handleDodge(false);
+            return {
+              ...prev,
+              enemyAttackPending: false,
+              dodgeWindowActive: false,
+              dodgeButtonReady: false,
+            };
+          }
+          return prev;
+        });
+      }, 500);
+    }, 2500);
+  }, [gameState.currentEnemy, gameState.inCombat, handleDodge]);
 
   const attack = useCallback((hit: boolean, category?: string) => {
     setGameState(prev => {
@@ -1083,6 +1155,11 @@ export const useGameState = () => {
           };
         }
 
+        // Enemy's turn - trigger dodge mechanic
+        setTimeout(() => {
+          triggerEnemyTurn();
+        }, 1000);
+
         return {
           ...prev,
           currentEnemy: { ...prev.currentEnemy, hp: newEnemyHp },
@@ -1091,23 +1168,12 @@ export const useGameState = () => {
           inventory: updatedInventory,
         };
       } else {
-        const damage = Math.max(1, prev.currentEnemy.atk - prev.playerStats.def);
-        newPlayerHp = Math.max(0, prev.playerStats.hp - damage);
-        newCombatLog.push(`You missed! The ${prev.currentEnemy.name} deals ${damage} damage to you!`);
-        
-        if (newPlayerHp <= 0) {
-          combatEnded = true;
-          playerWon = false;
-          newCombatLog.push(`You were defeated by the ${prev.currentEnemy.name}...`);
-          
-          return {
-            ...prev,
-            currentEnemy: null,
-            inCombat: false,
-            combatLog: newCombatLog,
-            playerStats: { ...prev.playerStats, hp: newPlayerHp },
-          };
-        }
+        // Player missed - enemy gets immediate turn
+        setTimeout(() => {
+          triggerEnemyTurn();
+        }, 1000);
+
+        newCombatLog.push(`You missed your attack!`);
 
         return {
           ...prev,
@@ -1122,7 +1188,7 @@ export const useGameState = () => {
       checkAndUnlockAchievements();
       checkAndUnlockPlayerTags();
     }, 100);
-  }, [updateStatistics, updateKnowledgeStreak, checkAndUnlockAchievements, checkAndUnlockPlayerTags, updateCollectionBook]);
+  }, [updateStatistics, updateKnowledgeStreak, checkAndUnlockAchievements, checkAndUnlockPlayerTags, updateCollectionBook, triggerEnemyTurn]);
 
   const resetGame = useCallback(async () => {
     try {
@@ -1137,6 +1203,8 @@ export const useGameState = () => {
         },
         playerTags: initializePlayerTags(),
       });
+
+      setCombatState(initialCombatState);
     } catch (error) {
       console.error('Error resetting game:', error);
     }
@@ -1144,6 +1212,7 @@ export const useGameState = () => {
 
   return {
     gameState,
+    combatState,
     isLoading,
     equipWeapon,
     equipArmor,
@@ -1170,5 +1239,6 @@ export const useGameState = () => {
     equipRelic,
     unequipRelic,
     sellRelic,
+    handleDodge,
   };
 };

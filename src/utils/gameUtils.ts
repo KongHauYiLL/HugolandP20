@@ -1,4 +1,4 @@
-import { Weapon, Armor, Enemy, RelicItem } from '../types/game';
+import { Weapon, Armor, Enemy, RelicItem, EnemyAbility } from '../types/game';
 
 const weaponNames = {
   common: ['Rusty Sword', 'Wooden Club', 'Stone Axe', 'Iron Dagger'],
@@ -45,6 +45,79 @@ const enemyNames = [
   'Crystal Beast', 'Ancient Dragon', 'Chaos Lord', 'Nightmare King',
   'Abyssal Terror', 'Cosmic Horror', 'Reality Bender', 'Dimension Lord',
   'Eternal Guardian', 'Void Emperor', 'Chaos Incarnate', 'Reality Destroyer'
+];
+
+const enemyAbilities: EnemyAbility[] = [
+  {
+    id: 'poison_touch',
+    name: 'Poison Touch',
+    description: 'Inflicts poison damage over time',
+    icon: '☠️',
+    effect: 'poison'
+  },
+  {
+    id: 'double_attack',
+    name: 'Double Attack',
+    description: 'Attacks twice in one turn',
+    icon: '⚔️',
+    effect: 'double_attack'
+  },
+  {
+    id: 'armor_piercing',
+    name: 'Armor Piercing',
+    description: 'Ignores 50% of defense',
+    icon: '🗡️',
+    effect: 'armor_piercing'
+  },
+  {
+    id: 'regeneration',
+    name: 'Regeneration',
+    description: 'Heals HP over time',
+    icon: '💚',
+    effect: 'regeneration'
+  },
+  {
+    id: 'critical_strike',
+    name: 'Critical Strike',
+    description: 'Deals 200% damage',
+    icon: '💥',
+    effect: 'critical_strike'
+  },
+  {
+    id: 'shield_bash',
+    name: 'Shield Bash',
+    description: 'Stuns and deals damage',
+    icon: '🛡️',
+    effect: 'shield_bash'
+  },
+  {
+    id: 'life_steal',
+    name: 'Life Steal',
+    description: 'Heals for 50% of damage dealt',
+    icon: '🩸',
+    effect: 'life_steal'
+  },
+  {
+    id: 'berserker_rage',
+    name: 'Berserker Rage',
+    description: 'Increases attack for 3 turns',
+    icon: '😡',
+    effect: 'berserker_rage'
+  },
+  {
+    id: 'frost_bite',
+    name: 'Frost Bite',
+    description: 'Reduces player attack for 2 turns',
+    icon: '❄️',
+    effect: 'frost_bite'
+  },
+  {
+    id: 'lightning_strike',
+    name: 'Lightning Strike',
+    description: 'Unavoidable electric damage',
+    icon: '⚡',
+    effect: 'lightning_strike'
+  }
 ];
 
 const getDurabilityByRarity = (rarity: string): number => {
@@ -214,6 +287,19 @@ export const generateMythicalArmor = (): Armor => {
   return generateArmor(false, 'mythical');
 };
 
+export const generateEnemyAbilities = (zone: number): EnemyAbility[] => {
+  const numAbilities = Math.min(Math.floor(zone / 5) + 1, 3); // 1-3 abilities based on zone
+  const availableAbilities = [...enemyAbilities];
+  const selectedAbilities: EnemyAbility[] = [];
+  
+  for (let i = 0; i < numAbilities && availableAbilities.length > 0; i++) {
+    const randomIndex = Math.floor(Math.random() * availableAbilities.length);
+    selectedAbilities.push(availableAbilities.splice(randomIndex, 1)[0]);
+  }
+  
+  return selectedAbilities;
+};
+
 export const generateEnemy = (zone: number): Enemy => {
   const nameIndex = Math.min(Math.floor((zone - 1) / 5), enemyNames.length - 1);
   const name = enemyNames[nameIndex];
@@ -230,6 +316,8 @@ export const generateEnemy = (zone: number): Enemy => {
     def = Math.floor(def * Math.pow(1.05, zone - 10));
   }
   
+  const abilities = generateEnemyAbilities(zone);
+  
   return {
     name,
     hp,
@@ -240,6 +328,8 @@ export const generateEnemy = (zone: number): Enemy => {
     isPoisoned: false,
     poisonTurns: 0,
     canDropItems: zone >= 10,
+    abilities,
+    statusEffects: {}
   };
 };
 
@@ -329,4 +419,55 @@ export const getRepairCost = (item: Weapon | Armor): number => {
   };
   
   return Math.ceil(baseCost * rarityMultiplier[item.rarity]);
+};
+
+export const applyEnemyAbilityEffect = (enemy: Enemy, ability: EnemyAbility, playerStats: any): { damage: number; effect?: string } => {
+  let damage = enemy.atk;
+  let effect = '';
+
+  switch (ability.effect) {
+    case 'poison':
+      enemy.statusEffects.poison = { turns: 3, damage: Math.floor(enemy.atk * 0.3) };
+      effect = 'Player is poisoned!';
+      break;
+    case 'double_attack':
+      damage = enemy.atk * 2;
+      effect = 'Enemy attacks twice!';
+      break;
+    case 'armor_piercing':
+      damage = Math.floor(enemy.atk * 1.5); // Ignores 50% of defense
+      effect = 'Armor piercing attack!';
+      break;
+    case 'regeneration':
+      enemy.statusEffects.regeneration = { turns: 3, healAmount: Math.floor(enemy.maxHp * 0.1) };
+      effect = 'Enemy begins regenerating!';
+      break;
+    case 'critical_strike':
+      damage = enemy.atk * 2;
+      effect = 'Critical strike!';
+      break;
+    case 'shield_bash':
+      damage = Math.floor(enemy.atk * 1.2);
+      effect = 'Shield bash stuns you!';
+      break;
+    case 'life_steal':
+      const healAmount = Math.floor(damage * 0.5);
+      enemy.hp = Math.min(enemy.maxHp, enemy.hp + healAmount);
+      effect = `Enemy heals for ${healAmount} HP!`;
+      break;
+    case 'berserker_rage':
+      enemy.statusEffects.berserkerRage = { turns: 3, atkMultiplier: 1.5 };
+      effect = 'Enemy enters berserker rage!';
+      break;
+    case 'frost_bite':
+      enemy.statusEffects.frostBite = { turns: 2, atkReduction: 0.3 };
+      effect = 'You are slowed by frost!';
+      break;
+    case 'lightning_strike':
+      damage = Math.floor(enemy.atk * 1.3);
+      effect = 'Lightning strike - unavoidable!';
+      break;
+  }
+
+  return { damage, effect };
 };

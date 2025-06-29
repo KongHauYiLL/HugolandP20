@@ -97,6 +97,14 @@ export interface RelicItem {
   description: string;
 }
 
+export interface EnemyAbility {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  effect: 'poison' | 'double_attack' | 'armor_piercing' | 'regeneration' | 'critical_strike' | 'shield_bash' | 'life_steal' | 'berserker_rage' | 'frost_bite' | 'lightning_strike';
+}
+
 export interface Enemy {
   name: string;
   hp: number;
@@ -107,6 +115,22 @@ export interface Enemy {
   isPoisoned?: boolean;
   poisonTurns?: number;
   canDropItems?: boolean;
+  abilities: EnemyAbility[];
+  statusEffects: {
+    poison?: { turns: number; damage: number };
+    regeneration?: { turns: number; healAmount: number };
+    berserkerRage?: { turns: number; atkMultiplier: number };
+    frostBite?: { turns: number; atkReduction: number };
+  };
+}
+
+export interface CombatState {
+  playerTurn: boolean;
+  enemyAttackPending: boolean;
+  dodgeWindowActive: boolean;
+  dodgeButtonReady: boolean;
+  dodgeTimeLeft: number;
+  lastEnemyAbilityUsed?: EnemyAbility;
 }
 
 export interface ChestReward {
@@ -176,6 +200,8 @@ export interface Statistics {
     };
   };
   sessionStartTime: Date;
+  dodgesSuccessful: number;
+  dodgesFailed: number;
 }
 
 export interface CheatSettings {
