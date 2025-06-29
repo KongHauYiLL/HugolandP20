@@ -5,9 +5,7 @@ import { Shop } from './components/Shop';
 import { Inventory } from './components/Inventory';
 import { PlayerStats } from './components/PlayerStats';
 import { Research } from './components/Research';
-import { Achievements } from './components/Achievements';
 import { CollectionBook } from './components/CollectionBook';
-import { Statistics } from './components/Statistics';
 import { EnhancedGameModes } from './components/EnhancedGameModes';
 import { PokyegMarket } from './components/PokyegMarket';
 import { Tutorial } from './components/Tutorial';
@@ -17,13 +15,13 @@ import { YojefMarket } from './components/YojefMarket';
 import { FloatingIcons } from './components/FloatingIcons';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { DailyRewards } from './components/DailyRewards';
-import { ProgressionPanel } from './components/ProgressionPanel';
 import { OfflineProgress } from './components/OfflineProgress';
 import { BulkActions } from './components/BulkActions';
-import { Shield, Package, User, Play, RotateCcw, Brain, Crown, Trophy, Book, BarChart3, Settings, Pickaxe, Gift, TrendingUp, Package2 } from 'lucide-react';
+import { HamburgerMenu } from './components/HamburgerMenu';
+import { Shield, Package, User, Play, RotateCcw, Brain, Crown, Gift, Pickaxe, Package2 } from 'lucide-react';
 
 type GameView = 'stats' | 'shop' | 'inventory' | 'research' | 'mining';
-type ModalView = 'achievements' | 'collection' | 'statistics' | 'gameMode' | 'pokyegMarket' | 'tutorial' | 'cheats' | 'resetConfirm' | 'yojefMarket' | 'dailyRewards' | 'progression' | 'offlineProgress' | 'bulkActions' | null;
+type ModalView = 'collection' | 'gameMode' | 'pokyegMarket' | 'tutorial' | 'cheats' | 'resetConfirm' | 'yojefMarket' | 'dailyRewards' | 'offlineProgress' | 'bulkActions' | null;
 
 function App() {
   const {
@@ -58,6 +56,9 @@ function App() {
     claimOfflineRewards,
     bulkSell,
     bulkUpgrade,
+    plantSeed,
+    buyWater,
+    updateSettings,
   } = useGameState();
 
   const [currentView, setCurrentView] = useState<GameView>('stats');
@@ -112,6 +113,7 @@ function App() {
                 <li>• Discover ancient relics in the Yojef Market</li>
                 <li>• Level up and unlock powerful skills</li>
                 <li>• Earn daily rewards and offline progress</li>
+                <li>• Grow plants in the Garden of Growth</li>
               </ul>
             </div>
           </div>
@@ -172,12 +174,6 @@ function App() {
             <div className="bg-gradient-to-r from-indigo-900/50 to-purple-900/50 p-3 sm:p-4 rounded-lg border border-indigo-500/50">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-white font-bold text-sm sm:text-base">Character Level</h3>
-                <button
-                  onClick={() => setCurrentModal('progression')}
-                  className="text-indigo-400 hover:text-indigo-300 transition-colors"
-                >
-                  <TrendingUp className="w-4 h-4" />
-                </button>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-indigo-400 font-bold text-lg">Lv.{gameState.progression.level}</span>
@@ -197,6 +193,35 @@ function App() {
                 </span>
               </div>
             </div>
+
+            {/* Garden Status */}
+            {gameState.gardenOfGrowth.isPlanted && (
+              <div className="bg-gradient-to-r from-green-900/50 to-emerald-900/50 p-3 sm:p-4 rounded-lg border border-green-500/50">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-white font-bold text-sm sm:text-base">Garden of Growth</h3>
+                  <span className="text-2xl">🌱</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-green-400 font-bold text-sm">
+                    {gameState.gardenOfGrowth.growthCm.toFixed(1)}cm
+                  </span>
+                  <div className="flex-1">
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min((gameState.gardenOfGrowth.growthCm / gameState.gardenOfGrowth.maxGrowthCm) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-300 mt-1">
+                      +{gameState.gardenOfGrowth.totalGrowthBonus.toFixed(1)}% all stats
+                    </p>
+                  </div>
+                  <span className="text-blue-400 font-semibold text-sm">
+                    {gameState.gardenOfGrowth.waterHoursRemaining.toFixed(1)}h water
+                  </span>
+                </div>
+              </div>
+            )}
             
             {/* Knowledge Streak Display */}
             {gameState.knowledgeStreak.current > 0 && (
@@ -259,7 +284,7 @@ function App() {
                   onClick={() => setCurrentModal('gameMode')}
                   className="px-3 sm:px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 transition-all duration-200 flex items-center gap-2 justify-center text-xs sm:text-sm"
                 >
-                  <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <Play className="w-3 h-3 sm:w-4 sm:h-4" />
                   Game Mode
                 </button>
                 
@@ -333,26 +358,12 @@ function App() {
     }
 
     switch (currentModal) {
-      case 'achievements':
-        return (
-          <Achievements
-            achievements={gameState.achievements}
-            onClose={() => setCurrentModal(null)}
-          />
-        );
       case 'collection':
         return (
           <CollectionBook
             collectionBook={gameState.collectionBook}
             allWeapons={gameState.inventory.weapons}
             allArmor={gameState.inventory.armor}
-            onClose={() => setCurrentModal(null)}
-          />
-        );
-      case 'statistics':
-        return (
-          <Statistics
-            statistics={gameState.statistics}
             onClose={() => setCurrentModal(null)}
           />
         );
@@ -406,15 +417,6 @@ function App() {
             onClose={() => setCurrentModal(null)}
           />
         );
-      case 'progression':
-        return (
-          <ProgressionPanel
-            progression={gameState.progression}
-            onUpgradeSkill={upgradeSkill}
-            onPrestige={prestige}
-            onClose={() => setCurrentModal(null)}
-          />
-        );
       case 'offlineProgress':
         return (
           <OfflineProgress
@@ -456,6 +458,7 @@ function App() {
                     <li>• Player tags and streaks</li>
                     <li>• Character level and skills</li>
                     <li>• Daily reward streaks</li>
+                    <li>• Garden of Growth progress</li>
                   </ul>
                 </div>
                 <p className="text-red-400 font-bold text-sm mb-6">
@@ -484,8 +487,6 @@ function App() {
     }
   };
 
-  const unlockedAchievements = gameState.achievements.filter(a => a.unlocked).length;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative">
       <FloatingIcons />
@@ -505,51 +506,37 @@ function App() {
                 <Crown className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-yellow-400 animate-pulse" />
               )}
             </div>
-            {/* Only show bulk actions button when not in combat */}
-            {!gameState.inCombat && (
-              <button
-                onClick={() => setCurrentModal('bulkActions')}
-                className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors text-sm"
-              >
-                <Package2 className="w-4 h-4" />
-                Bulk
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {/* Only show bulk actions button when not in combat */}
+              {!gameState.inCombat && (
+                <button
+                  onClick={() => setCurrentModal('bulkActions')}
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors text-sm"
+                >
+                  <Package2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Bulk</span>
+                </button>
+              )}
+              <HamburgerMenu
+                gameState={gameState}
+                onPlantSeed={plantSeed}
+                onBuyWater={buyWater}
+                onUpgradeSkill={upgradeSkill}
+                onPrestige={prestige}
+                onUpdateSettings={updateSettings}
+              />
+            </div>
           </div>
           
           {/* Quick Stats Bar - Hide during combat */}
           {!gameState.inCombat && (
             <div className="flex justify-center items-center gap-2 sm:gap-4 mb-3 sm:mb-4 text-xs sm:text-sm">
               <button
-                onClick={() => setCurrentModal('achievements')}
-                className="flex items-center gap-1 text-yellow-300 hover:text-yellow-200 transition-colors"
-              >
-                <Trophy className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>{unlockedAchievements}/{gameState.achievements.length}</span>
-              </button>
-              
-              <button
                 onClick={() => setCurrentModal('collection')}
                 className="flex items-center gap-1 text-indigo-300 hover:text-indigo-200 transition-colors"
               >
-                <Book className="w-3 h-3 sm:w-4 sm:h-4" />
+                <Package className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span>Collect</span>
-              </button>
-              
-              <button
-                onClick={() => setCurrentModal('statistics')}
-                className="flex items-center gap-1 text-blue-300 hover:text-blue-200 transition-colors"
-              >
-                <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>{Math.round((gameState.statistics.correctAnswers / Math.max(gameState.statistics.totalQuestionsAnswered, 1)) * 100)}%</span>
-              </button>
-
-              <button
-                onClick={() => setCurrentModal('progression')}
-                className="flex items-center gap-1 text-green-300 hover:text-green-200 transition-colors"
-              >
-                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>Lv.{gameState.progression.level}</span>
               </button>
 
               {gameState.dailyRewards.availableReward && (

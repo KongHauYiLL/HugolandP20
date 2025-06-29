@@ -22,6 +22,8 @@ export interface GameState {
   dailyRewards: DailyRewards;
   progression: ProgressionSystem;
   offlineProgress: OfflineProgress;
+  gardenOfGrowth: GardenOfGrowth;
+  settings: GameSettings;
 }
 
 export interface PlayerStats {
@@ -184,6 +186,16 @@ export interface Statistics {
     };
   };
   sessionStartTime: Date;
+  totalDeaths: number;
+  totalVictories: number;
+  longestStreak: number;
+  fastestVictory: number;
+  totalDamageDealt: number;
+  totalDamageTaken: number;
+  itemsUpgraded: number;
+  itemsSold: number;
+  totalResearchSpent: number;
+  averageAccuracy: number;
 }
 
 export interface CheatSettings {
@@ -266,6 +278,27 @@ export interface OfflineProgress {
   offlineGems: number;
   offlineTime: number;
   maxOfflineHours: number;
+}
+
+export interface GardenOfGrowth {
+  isPlanted: boolean;
+  plantedAt: Date | null;
+  lastWatered: Date | null;
+  waterHoursRemaining: number;
+  growthCm: number;
+  totalGrowthBonus: number;
+  seedCost: number;
+  waterCost: number;
+  maxGrowthCm: number;
+}
+
+export interface GameSettings {
+  colorblindMode: boolean;
+  darkMode: boolean;
+  language: 'en' | 'es' | 'fr' | 'de' | 'pt' | 'it' | 'ru' | 'ja' | 'ko' | 'zh';
+  soundEnabled: boolean;
+  musicEnabled: boolean;
+  notifications: boolean;
 }
 
 export interface TriviaQuestion {

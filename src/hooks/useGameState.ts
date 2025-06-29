@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { GameState, PlayerStats, Inventory, Enemy, Weapon, Armor, ChestReward, Research, Achievement, CollectionBook, KnowledgeStreak, GameMode, Statistics, CheatSettings, Mining, RelicItem, PlayerTag, DailyRewards, DailyReward, ProgressionSystem, OfflineProgress } from '../types/game';
+import { GameState, PlayerStats, Inventory, Enemy, Weapon, Armor, ChestReward, Research, Achievement, CollectionBook, KnowledgeStreak, GameMode, Statistics, CheatSettings, Mining, RelicItem, PlayerTag, DailyRewards, DailyReward, ProgressionSystem, OfflineProgress, GardenOfGrowth, GameSettings } from '../types/game';
 import { generateWeapon, generateArmor, generateEnemy, generateMythicalWeapon, generateMythicalArmor, calculateResearchBonus, calculateResearchCost, getChestRarityWeights, generateRelicItem } from '../utils/gameUtils';
 import { checkAchievements, initializeAchievements } from '../utils/achievements';
 import { checkPlayerTags, initializePlayerTags } from '../utils/playerTags';
@@ -74,6 +74,16 @@ const initialStatistics: Statistics = {
   chestsOpened: 0,
   accuracyByCategory: {},
   sessionStartTime: new Date(),
+  totalDeaths: 0,
+  totalVictories: 0,
+  longestStreak: 0,
+  fastestVictory: 0,
+  totalDamageDealt: 0,
+  totalDamageTaken: 0,
+  itemsUpgraded: 0,
+  itemsSold: 0,
+  totalResearchSpent: 0,
+  averageAccuracy: 0,
 };
 
 const initialCheats: CheatSettings = {
@@ -121,6 +131,27 @@ const initialOfflineProgress: OfflineProgress = {
   maxOfflineHours: 8,
 };
 
+const initialGardenOfGrowth: GardenOfGrowth = {
+  isPlanted: false,
+  plantedAt: null,
+  lastWatered: null,
+  waterHoursRemaining: 0,
+  growthCm: 0,
+  totalGrowthBonus: 0,
+  seedCost: 1000,
+  waterCost: 1000,
+  maxGrowthCm: 100,
+};
+
+const initialSettings: GameSettings = {
+  colorblindMode: false,
+  darkMode: true,
+  language: 'en',
+  soundEnabled: true,
+  musicEnabled: true,
+  notifications: true,
+};
+
 const generateYojefMarketItems = (): RelicItem[] => {
   const items: RelicItem[] = [];
   const numItems = 3 + Math.floor(Math.random() * 3); // 3-5 items
@@ -160,6 +191,8 @@ const initialGameState: GameState = {
   dailyRewards: initialDailyRewards,
   progression: initialProgression,
   offlineProgress: initialOfflineProgress,
+  gardenOfGrowth: initialGardenOfGrowth,
+  settings: initialSettings,
 };
 
 export const useGameState = () => {
@@ -193,6 +226,45 @@ export const useGameState = () => {
         },
       }));
     }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Garden growth timer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGameState(prev => {
+        if (!prev.gardenOfGrowth.isPlanted || prev.gardenOfGrowth.waterHoursRemaining <= 0) {
+          return prev;
+        }
+
+        const now = new Date();
+        const lastUpdate = new Date(prev.gardenOfGrowth.lastWatered || prev.gardenOfGrowth.plantedAt || now);
+        const hoursPassed = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
+        
+        if (hoursPassed >= 1) { // Grow every hour
+          const newGrowthCm = Math.min(
+            prev.gardenOfGrowth.growthCm + 0.5, // 0.5cm per hour
+            prev.gardenOfGrowth.maxGrowthCm
+          );
+          const newWaterHours = Math.max(0, prev.gardenOfGrowth.waterHoursRemaining - hoursPassed);
+          const newGrowthBonus = newGrowthCm * 5; // 5% per cm
+
+          return {
+            ...prev,
+            gardenOfGrowth: {
+              ...prev.gardenOfGrowth,
+              growthCm: newGrowthCm,
+              totalGrowthBonus: newGrowthBonus,
+              waterHoursRemaining: newWaterHours,
+              lastWatered: now,
+            },
+          };
+        }
+
+        return prev;
+      });
+    }, 60000); // Check every minute
 
     return () => clearInterval(interval);
   }, []);
@@ -381,6 +453,16 @@ export const useGameState = () => {
               ...initialOfflineProgress,
               ...parsedState.offlineProgress,
               lastSaveTime: new Date(parsedState.offlineProgress?.lastSaveTime || Date.now()),
+            },
+            gardenOfGrowth: {
+              ...initialGardenOfGrowth,
+              ...parsedState.gardenOfGrowth,
+              plantedAt: parsedState.gardenOfGrowth?.plantedAt ? new Date(parsedState.gardenOfGrowth.plantedAt) : null,
+              lastWatered: parsedState.gardenOfGrowth?.lastWatered ? new Date(parsedState.gardenOfGrowth.lastWatered) : null,
+            },
+            settings: {
+              ...initialSettings,
+              ...parsedState.settings,
             },
           });
         } else {
@@ -606,9 +688,12 @@ export const useGameState = () => {
       const defResearchBonus = calculateResearchBonus(prev.research.def.level);
       const hpResearchBonus = calculateResearchBonus(prev.research.hp.level);
 
-      let atkMultiplier = 1 + (atkResearchBonus / 100);
-      let defMultiplier = 1 + (defResearchBonus / 100);
-      let hpMultiplier = 1 + (hpResearchBonus / 100);
+      // Add garden bonus
+      const gardenBonus = prev.gardenOfGrowth.totalGrowthBonus / 100;
+
+      let atkMultiplier = 1 + (atkResearchBonus / 100) + gardenBonus;
+      let defMultiplier = 1 + (defResearchBonus / 100) + gardenBonus;
+      let hpMultiplier = 1 + (hpResearchBonus / 100) + gardenBonus;
 
       // Apply game mode modifiers
       switch (prev.gameMode.current) {
@@ -831,6 +916,10 @@ export const useGameState = () => {
             ? prev.inventory.armor.filter(a => !itemIds.includes(a.id))
             : prev.inventory.armor,
         },
+        statistics: {
+          ...prev.statistics,
+          itemsSold: prev.statistics.itemsSold + selectedItems.length,
+        },
       };
     });
   }, []);
@@ -869,10 +958,77 @@ export const useGameState = () => {
             ? updatedItems.find(a => a.id === prev.inventory.currentArmor?.id) as Armor || null
             : prev.inventory.currentArmor,
         },
+        statistics: {
+          ...prev.statistics,
+          itemsUpgraded: prev.statistics.itemsUpgraded + selectedItems.length,
+        },
       };
     });
     updatePlayerStats();
   }, [updatePlayerStats]);
+
+  const plantSeed = useCallback((): boolean => {
+    setGameState(prev => {
+      if (prev.gardenOfGrowth.isPlanted || prev.coins < prev.gardenOfGrowth.seedCost) {
+        return prev;
+      }
+
+      const now = new Date();
+
+      return {
+        ...prev,
+        coins: prev.coins - prev.gardenOfGrowth.seedCost,
+        gardenOfGrowth: {
+          ...prev.gardenOfGrowth,
+          isPlanted: true,
+          plantedAt: now,
+          lastWatered: now,
+          waterHoursRemaining: 24, // Start with 24 hours of water
+        },
+      };
+    });
+
+    return true;
+  }, []);
+
+  const buyWater = useCallback((hours: number): boolean => {
+    const waterCosts = {
+      24: 1000,
+      72: 2800,
+      168: 6500,
+      720: 25000
+    };
+
+    const cost = waterCosts[hours as keyof typeof waterCosts] || 1000;
+
+    setGameState(prev => {
+      if (!prev.gardenOfGrowth.isPlanted || prev.coins < cost) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        coins: prev.coins - cost,
+        gardenOfGrowth: {
+          ...prev.gardenOfGrowth,
+          waterHoursRemaining: prev.gardenOfGrowth.waterHoursRemaining + hours,
+          lastWatered: new Date(),
+        },
+      };
+    });
+
+    return true;
+  }, []);
+
+  const updateSettings = useCallback((newSettings: Partial<GameSettings>) => {
+    setGameState(prev => ({
+      ...prev,
+      settings: {
+        ...prev.settings,
+        ...newSettings,
+      },
+    }));
+  }, []);
 
   const discardItem = useCallback((itemId: string, type: 'weapon' | 'armor') => {
     setGameState(prev => ({
@@ -1036,6 +1192,10 @@ export const useGameState = () => {
           weapons: updatedWeapons,
           currentWeapon: updatedCurrentWeapon,
         },
+        statistics: {
+          ...prev.statistics,
+          itemsUpgraded: prev.statistics.itemsUpgraded + 1,
+        },
       };
     });
     updatePlayerStats();
@@ -1064,6 +1224,10 @@ export const useGameState = () => {
           armor: updatedArmor,
           currentArmor: updatedCurrentArmor,
         },
+        statistics: {
+          ...prev.statistics,
+          itemsUpgraded: prev.statistics.itemsUpgraded + 1,
+        },
       };
     });
     updatePlayerStats();
@@ -1081,6 +1245,10 @@ export const useGameState = () => {
           ...prev.inventory,
           weapons: prev.inventory.weapons.filter(w => w.id !== weaponId),
         },
+        statistics: {
+          ...prev.statistics,
+          itemsSold: prev.statistics.itemsSold + 1,
+        },
       };
     });
   }, []);
@@ -1096,6 +1264,10 @@ export const useGameState = () => {
         inventory: {
           ...prev.inventory,
           armor: prev.inventory.armor.filter(a => a.id !== armorId),
+        },
+        statistics: {
+          ...prev.statistics,
+          itemsSold: prev.statistics.itemsSold + 1,
         },
       };
     });
@@ -1117,6 +1289,10 @@ export const useGameState = () => {
             level: newLevel,
             totalSpent: prev.research[type].totalSpent + researchCost,
           },
+        },
+        statistics: {
+          ...prev.statistics,
+          totalResearchSpent: prev.statistics.totalResearchSpent + researchCost,
         },
       };
     });
@@ -1353,6 +1529,8 @@ export const useGameState = () => {
               zonesReached: Math.max(prev.statistics.zonesReached, newZone),
               coinsEarned: prev.statistics.coinsEarned + coinsEarned,
               gemsEarned: prev.statistics.gemsEarned + gemsEarned,
+              totalVictories: prev.statistics.totalVictories + 1,
+              totalDamageDealt: prev.statistics.totalDamageDealt + finalDamage,
             },
           };
         }
@@ -1363,6 +1541,10 @@ export const useGameState = () => {
           playerStats: { ...prev.playerStats, hp: newPlayerHp },
           combatLog: newCombatLog,
           inventory: updatedInventory,
+          statistics: {
+            ...prev.statistics,
+            totalDamageDealt: prev.statistics.totalDamageDealt + finalDamage,
+          },
         };
       } else {
         const damage = Math.max(1, prev.currentEnemy.atk - prev.playerStats.def);
@@ -1387,6 +1569,11 @@ export const useGameState = () => {
                 ...prev.gameMode,
                 survivalLives: newLives,
               },
+              statistics: {
+                ...prev.statistics,
+                totalDeaths: prev.statistics.totalDeaths + 1,
+                totalDamageTaken: prev.statistics.totalDamageTaken + damage,
+              },
             };
           }
           
@@ -1396,6 +1583,11 @@ export const useGameState = () => {
             inCombat: false,
             combatLog: newCombatLog,
             playerStats: { ...prev.playerStats, hp: newPlayerHp },
+            statistics: {
+              ...prev.statistics,
+              totalDeaths: prev.statistics.totalDeaths + 1,
+              totalDamageTaken: prev.statistics.totalDamageTaken + damage,
+            },
           };
         }
 
@@ -1404,6 +1596,10 @@ export const useGameState = () => {
           currentEnemy: { ...prev.currentEnemy, hp: newEnemyHp },
           playerStats: { ...prev.playerStats, hp: newPlayerHp },
           combatLog: newCombatLog,
+          statistics: {
+            ...prev.statistics,
+            totalDamageTaken: prev.statistics.totalDamageTaken + damage,
+          },
         };
       }
     });
@@ -1465,5 +1661,8 @@ export const useGameState = () => {
     claimOfflineRewards,
     bulkSell,
     bulkUpgrade,
+    plantSeed,
+    buyWater,
+    updateSettings,
   };
 };
