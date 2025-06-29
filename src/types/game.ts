@@ -17,7 +17,6 @@ export interface GameState {
   statistics: Statistics;
   cheats: CheatSettings;
   mining: Mining;
-  promoCodes: PromoCodeState;
   yojefMarket: YojefMarket;
   playerTags: PlayerTag[];
 }
@@ -204,23 +203,6 @@ export interface MiningTool {
   cost: number;
   efficiency: number;
   owned: boolean;
-}
-
-export interface PromoCodeState {
-  usedCodes: string[];
-  availableCodes: PromoCode[];
-}
-
-export interface PromoCode {
-  code: string;
-  name: string;
-  description: string;
-  rewards: {
-    coins?: number;
-    gems?: number;
-    items?: (Weapon | Armor)[];
-  };
-  isUsed: boolean;
 }
 
 export interface YojefMarket {

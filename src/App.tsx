@@ -13,13 +13,12 @@ import { PokyegMarket } from './components/PokyegMarket';
 import { Tutorial } from './components/Tutorial';
 import { CheatPanel } from './components/CheatPanel';
 import { Mining } from './components/Mining';
-import { PromoCode } from './components/PromoCode';
 import { YojefMarket } from './components/YojefMarket';
 import { FloatingIcons } from './components/FloatingIcons';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
-import { Shield, Package, User, Play, RotateCcw, Brain, Crown, Trophy, Book, BarChart3, Settings, Pickaxe, Gift } from 'lucide-react';
+import { Shield, Package, User, Play, RotateCcw, Brain, Crown, Trophy, Book, BarChart3, Settings, Pickaxe } from 'lucide-react';
 
-type GameView = 'stats' | 'shop' | 'inventory' | 'research' | 'mining' | 'promo';
+type GameView = 'stats' | 'shop' | 'inventory' | 'research' | 'mining';
 type ModalView = 'achievements' | 'collection' | 'statistics' | 'gameMode' | 'pokyegMarket' | 'tutorial' | 'cheats' | 'resetConfirm' | 'yojefMarket' | null;
 
 function App() {
@@ -43,7 +42,6 @@ function App() {
     generateCheatItem,
     mineGem,
     exchangeShinyGems,
-    redeemPromoCode,
     discardItem,
     repairWithAnvil,
     purchaseRelic,
@@ -255,13 +253,6 @@ function App() {
             onExchangeShinyGems={exchangeShinyGems}
           />
         );
-      case 'promo':
-        return (
-          <PromoCode
-            promoCodes={gameState.promoCodes}
-            onRedeemCode={redeemPromoCode}
-          />
-        );
       default:
         return null;
     }
@@ -440,7 +431,6 @@ function App() {
               { id: 'shop', label: 'Shop', icon: Package },
               { id: 'inventory', label: 'Inventory', icon: Shield },
               { id: 'mining', label: 'Mining', icon: Pickaxe },
-              { id: 'promo', label: 'Promo', icon: Gift },
             ].map(({ id, label, icon: Icon }) => (
               <button
                 key={id}

@@ -91,22 +91,6 @@ const initialMining: Mining = {
   totalShinyGemsMined: 0,
 };
 
-const initialPromoCodes = {
-  usedCodes: [],
-  availableCodes: [
-    {
-      code: 'TNT',
-      name: 'Explosive Start',
-      description: 'Get a head start with bonus resources!',
-      rewards: {
-        coins: 500,
-        gems: 50,
-      },
-      isUsed: false,
-    },
-  ],
-};
-
 const generateYojefMarketItems = (): RelicItem[] => {
   const items: RelicItem[] = [];
   const numItems = 3 + Math.floor(Math.random() * 3); // 3-5 items
@@ -137,7 +121,6 @@ const initialGameState: GameState = {
   statistics: initialStatistics,
   cheats: initialCheats,
   mining: initialMining,
-  promoCodes: initialPromoCodes,
   yojefMarket: {
     items: generateYojefMarketItems(),
     lastRefresh: new Date(),
@@ -262,7 +245,6 @@ export const useGameState = () => {
             isPremium: parsedState.isPremium || parsedState.zone >= 50,
             cheats: parsedState.cheats || initialCheats,
             mining: parsedState.mining || initialMining,
-            promoCodes: parsedState.promoCodes || initialPromoCodes,
             yojefMarket: yojefMarket,
             playerTags: parsedState.playerTags || initializePlayerTags(),
             shinyGems: parsedState.shinyGems || 0,
@@ -574,62 +556,6 @@ export const useGameState = () => {
           ...prev.statistics,
           gemsEarned: prev.statistics.gemsEarned + gemsToAdd,
         },
-      };
-    });
-
-    return true;
-  }, []);
-
-  const redeemPromoCode = useCallback((code: string): boolean => {
-    setGameState(prev => {
-      if (prev.promoCodes.usedCodes.includes(code)) {
-        return prev;
-      }
-
-      const promoCode = prev.promoCodes.availableCodes.find(pc => pc.code === code);
-      if (!promoCode) {
-        return prev;
-      }
-
-      const updatedPromoCodes = {
-        ...prev.promoCodes,
-        usedCodes: [...prev.promoCodes.usedCodes, code],
-        availableCodes: prev.promoCodes.availableCodes.map(pc => 
-          pc.code === code ? { ...pc, isUsed: true } : pc
-        ),
-      };
-
-      let newCoins = prev.coins;
-      let newGems = prev.gems;
-      let newWeapons = [...prev.inventory.weapons];
-      let newArmor = [...prev.inventory.armor];
-
-      if (promoCode.rewards.coins) {
-        newCoins += promoCode.rewards.coins;
-      }
-      if (promoCode.rewards.gems) {
-        newGems += promoCode.rewards.gems;
-      }
-      if (promoCode.rewards.items) {
-        promoCode.rewards.items.forEach(item => {
-          if ('baseAtk' in item) {
-            newWeapons.push(item as Weapon);
-          } else {
-            newArmor.push(item as Armor);
-          }
-        });
-      }
-
-      return {
-        ...prev,
-        coins: newCoins,
-        gems: newGems,
-        inventory: {
-          ...prev.inventory,
-          weapons: newWeapons,
-          armor: newArmor,
-        },
-        promoCodes: updatedPromoCodes,
       };
     });
 
@@ -1237,7 +1163,6 @@ export const useGameState = () => {
     checkAndUnlockAchievements,
     mineGem,
     exchangeShinyGems,
-    redeemPromoCode,
     discardItem,
     repairWithAnvil,
     purchaseRelic,
