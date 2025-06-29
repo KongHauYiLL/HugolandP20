@@ -54,6 +54,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     category: 'Geography',
     difficulty: 'easy'
   },
+  {
+    id: '100',
+    question: 'What is the capital of Italy?',
+    type: 'multiple-choice',
+    options: ['Milan', 'Rome', 'Naples', 'Florence'],
+    correctAnswer: 1,
+    category: 'Geography',
+    difficulty: 'easy'
+  },
+  {
+    id: '101',
+    question: 'Which country is known as the Land of the Rising Sun?',
+    type: 'type-answer',
+    correctAnswer: 'japan',
+    category: 'Geography',
+    difficulty: 'easy'
+  },
+  {
+    id: '102',
+    question: 'What is the smallest continent?',
+    type: 'multiple-choice',
+    options: ['Europe', 'Antarctica', 'Australia', 'South America'],
+    correctAnswer: 2,
+    category: 'Geography',
+    difficulty: 'easy'
+  },
+  {
+    id: '103',
+    question: 'Which river flows through London?',
+    type: 'type-answer',
+    correctAnswer: 'thames',
+    category: 'Geography',
+    difficulty: 'easy'
+  },
+  {
+    id: '104',
+    question: 'What is the capital of Canada?',
+    type: 'multiple-choice',
+    options: ['Toronto', 'Vancouver', 'Ottawa', 'Montreal'],
+    correctAnswer: 2,
+    category: 'Geography',
+    difficulty: 'easy'
+  },
 
   // Science - Easy
   {
@@ -108,6 +151,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     category: 'Science',
     difficulty: 'easy'
   },
+  {
+    id: '105',
+    question: 'What is the largest planet in our solar system?',
+    type: 'multiple-choice',
+    options: ['Saturn', 'Jupiter', 'Neptune', 'Uranus'],
+    correctAnswer: 1,
+    category: 'Science',
+    difficulty: 'easy'
+  },
+  {
+    id: '106',
+    question: 'What do bees make?',
+    type: 'type-answer',
+    correctAnswer: 'honey',
+    category: 'Science',
+    difficulty: 'easy'
+  },
+  {
+    id: '107',
+    question: 'How many chambers does a human heart have?',
+    type: 'multiple-choice',
+    options: ['2', '3', '4', '5'],
+    correctAnswer: 2,
+    category: 'Science',
+    difficulty: 'easy'
+  },
+  {
+    id: '108',
+    question: 'What is the hardest substance found in nature?',
+    type: 'type-answer',
+    correctAnswer: 'diamond',
+    category: 'Science',
+    difficulty: 'easy'
+  },
+  {
+    id: '109',
+    question: 'Which organ in the human body produces insulin?',
+    type: 'multiple-choice',
+    options: ['Liver', 'Kidney', 'Pancreas', 'Heart'],
+    correctAnswer: 2,
+    category: 'Science',
+    difficulty: 'easy'
+  },
 
   // Math - Easy
   {
@@ -153,6 +239,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     category: 'Math',
     difficulty: 'easy'
   },
+  {
+    id: '110',
+    question: 'What is 9 × 9?',
+    type: 'multiple-choice',
+    options: ['72', '81', '90', '99'],
+    correctAnswer: 1,
+    category: 'Math',
+    difficulty: 'easy'
+  },
+  {
+    id: '111',
+    question: 'What is 20 + 35?',
+    type: 'type-answer',
+    correctAnswer: '55',
+    category: 'Math',
+    difficulty: 'easy'
+  },
+  {
+    id: '112',
+    question: 'What is 8 × 8?',
+    type: 'multiple-choice',
+    options: ['56', '64', '72', '80'],
+    correctAnswer: 1,
+    category: 'Math',
+    difficulty: 'easy'
+  },
+  {
+    id: '113',
+    question: 'What is 45 ÷ 9?',
+    type: 'type-answer',
+    correctAnswer: '5',
+    category: 'Math',
+    difficulty: 'easy'
+  },
+  {
+    id: '114',
+    question: 'What is 12 + 18?',
+    type: 'multiple-choice',
+    options: ['28', '30', '32', '34'],
+    correctAnswer: 1,
+    category: 'Math',
+    difficulty: 'easy'
+  },
 
   // Art - Easy
   {
@@ -182,6 +311,23 @@ export const triviaQuestions: TriviaQuestion[] = [
     category: 'Art',
     difficulty: 'easy'
   },
+  {
+    id: '115',
+    question: 'What color do you get when you mix blue and yellow?',
+    type: 'type-answer',
+    correctAnswer: 'green',
+    category: 'Art',
+    difficulty: 'easy'
+  },
+  {
+    id: '116',
+    question: 'What are the three primary colors?',
+    type: 'multiple-choice',
+    options: ['Red, Blue, Green', 'Red, Blue, Yellow', 'Blue, Yellow, Orange', 'Red, Green, Purple'],
+    correctAnswer: 1,
+    category: 'Art',
+    difficulty: 'easy'
+  },
 
   // History - Easy
   {
@@ -202,6 +348,24 @@ export const triviaQuestions: TriviaQuestion[] = [
     category: 'History',
     difficulty: 'easy'
   },
+  {
+    id: '117',
+    question: 'Which ancient wonder was located in Egypt?',
+    type: 'multiple-choice',
+    options: ['Hanging Gardens', 'Great Pyramid', 'Colossus', 'Lighthouse'],
+    correctAnswer: 1,
+    category: 'History',
+    difficulty: 'easy'
+  },
+  {
+    id: '118',
+    question: 'In which century did Christopher Columbus reach the Americas?',
+    type: 'multiple-choice',
+    options: ['14th', '15th', '16th', '17th'],
+    correctAnswer: 1,
+    category: 'History',
+    difficulty: 'easy'
+  },
 
   // Sports - Easy
   {
@@ -218,6 +382,23 @@ export const triviaQuestions: TriviaQuestion[] = [
     question: 'In which sport would you perform a slam dunk?',
     type: 'type-answer',
     correctAnswer: 'basketball',
+    category: 'Sports',
+    difficulty: 'easy'
+  },
+  {
+    id: '119',
+    question: 'How many players are on a soccer team on the field at one time?',
+    type: 'multiple-choice',
+    options: ['9', '10', '11', '12'],
+    correctAnswer: 2,
+    category: 'Sports',
+    difficulty: 'easy'
+  },
+  {
+    id: '120',
+    question: 'In which sport do you use a racket and shuttlecock?',
+    type: 'type-answer',
+    correctAnswer: 'badminton',
     category: 'Sports',
     difficulty: 'easy'
   },
@@ -267,6 +448,48 @@ export const triviaQuestions: TriviaQuestion[] = [
     category: 'Science',
     difficulty: 'medium'
   },
+  {
+    id: '121',
+    question: 'What is the chemical formula for table salt?',
+    type: 'type-answer',
+    correctAnswer: 'nacl',
+    category: 'Science',
+    difficulty: 'medium'
+  },
+  {
+    id: '122',
+    question: 'Which scientist developed the periodic table?',
+    type: 'multiple-choice',
+    options: ['Darwin', 'Mendeleev', 'Newton', 'Einstein'],
+    correctAnswer: 1,
+    category: 'Science',
+    difficulty: 'medium'
+  },
+  {
+    id: '123',
+    question: 'What is the process by which plants make their own food?',
+    type: 'type-answer',
+    correctAnswer: 'photosynthesis',
+    category: 'Science',
+    difficulty: 'medium'
+  },
+  {
+    id: '124',
+    question: 'Which planet has the most moons?',
+    type: 'multiple-choice',
+    options: ['Jupiter', 'Saturn', 'Uranus', 'Neptune'],
+    correctAnswer: 1,
+    category: 'Science',
+    difficulty: 'medium'
+  },
+  {
+    id: '125',
+    question: 'What is the study of earthquakes called?',
+    type: 'type-answer',
+    correctAnswer: 'seismology',
+    category: 'Science',
+    difficulty: 'medium'
+  },
 
   // History - Medium
   {
@@ -304,6 +527,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     category: 'History',
     difficulty: 'medium'
   },
+  {
+    id: '126',
+    question: 'Which empire was ruled by Julius Caesar?',
+    type: 'multiple-choice',
+    options: ['Greek', 'Roman', 'Egyptian', 'Persian'],
+    correctAnswer: 1,
+    category: 'History',
+    difficulty: 'medium'
+  },
+  {
+    id: '127',
+    question: 'In which year did World War I begin?',
+    type: 'type-answer',
+    correctAnswer: '1914',
+    category: 'History',
+    difficulty: 'medium'
+  },
+  {
+    id: '128',
+    question: 'Who was the first woman to win a Nobel Prize?',
+    type: 'multiple-choice',
+    options: ['Marie Curie', 'Rosalind Franklin', 'Dorothy Hodgkin', 'Lise Meitner'],
+    correctAnswer: 0,
+    category: 'History',
+    difficulty: 'medium'
+  },
+  {
+    id: '129',
+    question: 'Which revolution began in 1789?',
+    type: 'type-answer',
+    correctAnswer: 'french revolution',
+    category: 'History',
+    difficulty: 'medium'
+  },
+  {
+    id: '130',
+    question: 'Who was the leader of the Soviet Union during World War II?',
+    type: 'multiple-choice',
+    options: ['Lenin', 'Stalin', 'Khrushchev', 'Brezhnev'],
+    correctAnswer: 1,
+    category: 'History',
+    difficulty: 'medium'
+  },
 
   // Literature - Medium
   {
@@ -328,6 +594,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     question: 'Who wrote "To Kill a Mockingbird"?',
     type: 'type-answer',
     correctAnswer: 'harper lee',
+    category: 'Literature',
+    difficulty: 'medium'
+  },
+  {
+    id: '131',
+    question: 'Who wrote "Pride and Prejudice"?',
+    type: 'multiple-choice',
+    options: ['Charlotte Bronte', 'Emily Bronte', 'Jane Austen', 'George Eliot'],
+    correctAnswer: 2,
+    category: 'Literature',
+    difficulty: 'medium'
+  },
+  {
+    id: '132',
+    question: 'Which book features the character Atticus Finch?',
+    type: 'type-answer',
+    correctAnswer: 'to kill a mockingbird',
+    category: 'Literature',
+    difficulty: 'medium'
+  },
+  {
+    id: '133',
+    question: 'Who wrote "1984"?',
+    type: 'multiple-choice',
+    options: ['Aldous Huxley', 'George Orwell', 'Ray Bradbury', 'Kurt Vonnegut'],
+    correctAnswer: 1,
+    category: 'Literature',
+    difficulty: 'medium'
+  },
+  {
+    id: '134',
+    question: 'What is the first book in the Harry Potter series?',
+    type: 'type-answer',
+    correctAnswer: 'philosophers stone',
+    category: 'Literature',
+    difficulty: 'medium'
+  },
+  {
+    id: '135',
+    question: 'Who wrote "The Great Gatsby"?',
+    type: 'multiple-choice',
+    options: ['Ernest Hemingway', 'F. Scott Fitzgerald', 'John Steinbeck', 'William Faulkner'],
+    correctAnswer: 1,
     category: 'Literature',
     difficulty: 'medium'
   },
@@ -366,6 +675,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     category: 'Math',
     difficulty: 'medium'
   },
+  {
+    id: '136',
+    question: 'What is 25% of 80?',
+    type: 'multiple-choice',
+    options: ['15', '20', '25', '30'],
+    correctAnswer: 1,
+    category: 'Math',
+    difficulty: 'medium'
+  },
+  {
+    id: '137',
+    question: 'What is the square root of 169?',
+    type: 'type-answer',
+    correctAnswer: '13',
+    category: 'Math',
+    difficulty: 'medium'
+  },
+  {
+    id: '138',
+    question: 'What is 7 to the power of 2?',
+    type: 'multiple-choice',
+    options: ['14', '21', '49', '56'],
+    correctAnswer: 2,
+    category: 'Math',
+    difficulty: 'medium'
+  },
+  {
+    id: '139',
+    question: 'What is 144 ÷ 12?',
+    type: 'type-answer',
+    correctAnswer: '12',
+    category: 'Math',
+    difficulty: 'medium'
+  },
+  {
+    id: '140',
+    question: 'What is 30% of 150?',
+    type: 'multiple-choice',
+    options: ['35', '40', '45', '50'],
+    correctAnswer: 2,
+    category: 'Math',
+    difficulty: 'medium'
+  },
 
   // Geography - Medium
   {
@@ -390,6 +742,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     question: 'Which mountain range contains Mount Everest?',
     type: 'type-answer',
     correctAnswer: 'himalayas',
+    category: 'Geography',
+    difficulty: 'medium'
+  },
+  {
+    id: '141',
+    question: 'What is the capital of Australia?',
+    type: 'multiple-choice',
+    options: ['Sydney', 'Melbourne', 'Canberra', 'Perth'],
+    correctAnswer: 2,
+    category: 'Geography',
+    difficulty: 'medium'
+  },
+  {
+    id: '142',
+    question: 'Which desert is the largest in the world?',
+    type: 'type-answer',
+    correctAnswer: 'sahara',
+    category: 'Geography',
+    difficulty: 'medium'
+  },
+  {
+    id: '143',
+    question: 'Which strait separates Europe and Africa?',
+    type: 'multiple-choice',
+    options: ['Bering Strait', 'Strait of Gibraltar', 'Strait of Hormuz', 'Bass Strait'],
+    correctAnswer: 1,
+    category: 'Geography',
+    difficulty: 'medium'
+  },
+  {
+    id: '144',
+    question: 'What is the highest mountain in North America?',
+    type: 'type-answer',
+    correctAnswer: 'denali',
+    category: 'Geography',
+    difficulty: 'medium'
+  },
+  {
+    id: '145',
+    question: 'Which country has the most time zones?',
+    type: 'multiple-choice',
+    options: ['Russia', 'United States', 'China', 'Canada'],
+    correctAnswer: 0,
     category: 'Geography',
     difficulty: 'medium'
   },
@@ -438,6 +833,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     category: 'Science',
     difficulty: 'hard'
   },
+  {
+    id: '146',
+    question: 'What is the study of the structure and function of proteins called?',
+    type: 'multiple-choice',
+    options: ['Genomics', 'Proteomics', 'Metabolomics', 'Transcriptomics'],
+    correctAnswer: 1,
+    category: 'Science',
+    difficulty: 'hard'
+  },
+  {
+    id: '147',
+    question: 'Which scientist proposed the concept of natural selection?',
+    type: 'type-answer',
+    correctAnswer: 'darwin',
+    category: 'Science',
+    difficulty: 'hard'
+  },
+  {
+    id: '148',
+    question: 'What is the name of the process by which DNA is copied?',
+    type: 'multiple-choice',
+    options: ['Transcription', 'Translation', 'Replication', 'Mutation'],
+    correctAnswer: 2,
+    category: 'Science',
+    difficulty: 'hard'
+  },
+  {
+    id: '149',
+    question: 'Which element has the atomic number 79?',
+    type: 'type-answer',
+    correctAnswer: 'gold',
+    category: 'Science',
+    difficulty: 'hard'
+  },
+  {
+    id: '150',
+    question: 'What is the term for the bending of light as it passes through different media?',
+    type: 'multiple-choice',
+    options: ['Reflection', 'Refraction', 'Diffraction', 'Interference'],
+    correctAnswer: 1,
+    category: 'Science',
+    difficulty: 'hard'
+  },
 
   // Art - Hard
   {
@@ -463,6 +901,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     question: 'Who sculpted "The Thinker"?',
     type: 'type-answer',
     correctAnswer: 'rodin',
+    category: 'Art',
+    difficulty: 'hard'
+  },
+  {
+    id: '151',
+    question: 'Which artist cut off his own ear?',
+    type: 'multiple-choice',
+    options: ['Pablo Picasso', 'Vincent van Gogh', 'Salvador Dali', 'Henri Matisse'],
+    correctAnswer: 1,
+    category: 'Art',
+    difficulty: 'hard'
+  },
+  {
+    id: '152',
+    question: 'Who painted the ceiling of the Sistine Chapel?',
+    type: 'type-answer',
+    correctAnswer: 'michelangelo',
+    category: 'Art',
+    difficulty: 'hard'
+  },
+  {
+    id: '153',
+    question: 'Which art movement emphasized emotion and individualism?',
+    type: 'multiple-choice',
+    options: ['Classicism', 'Romanticism', 'Realism', 'Baroque'],
+    correctAnswer: 1,
+    category: 'Art',
+    difficulty: 'hard'
+  },
+  {
+    id: '154',
+    question: 'Who painted "Girl with a Pearl Earring"?',
+    type: 'type-answer',
+    correctAnswer: 'vermeer',
+    category: 'Art',
+    difficulty: 'hard'
+  },
+  {
+    id: '155',
+    question: 'Which artist is known for the "Campbell\'s Soup Cans" artwork?',
+    type: 'multiple-choice',
+    options: ['Andy Warhol', 'Roy Lichtenstein', 'Jackson Pollock', 'Keith Haring'],
+    correctAnswer: 0,
     category: 'Art',
     difficulty: 'hard'
   },
@@ -494,6 +975,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     category: 'Technology',
     difficulty: 'hard'
   },
+  {
+    id: '156',
+    question: 'What does "AI" stand for in technology?',
+    type: 'multiple-choice',
+    options: ['Automated Intelligence', 'Artificial Intelligence', 'Advanced Integration', 'Algorithmic Interface'],
+    correctAnswer: 1,
+    category: 'Technology',
+    difficulty: 'hard'
+  },
+  {
+    id: '157',
+    question: 'Which company developed the first commercial microprocessor?',
+    type: 'type-answer',
+    correctAnswer: 'intel',
+    category: 'Technology',
+    difficulty: 'hard'
+  },
+  {
+    id: '158',
+    question: 'What does "URL" stand for?',
+    type: 'multiple-choice',
+    options: ['Universal Resource Locator', 'Uniform Resource Locator', 'Universal Reference Link', 'Uniform Reference Locator'],
+    correctAnswer: 1,
+    category: 'Technology',
+    difficulty: 'hard'
+  },
+  {
+    id: '159',
+    question: 'Which programming language is known for its use in data science?',
+    type: 'type-answer',
+    correctAnswer: 'python',
+    category: 'Technology',
+    difficulty: 'hard'
+  },
+  {
+    id: '160',
+    question: 'What does "SQL" stand for?',
+    type: 'multiple-choice',
+    options: ['Structured Query Language', 'Standard Query Language', 'Sequential Query Language', 'Simple Query Language'],
+    correctAnswer: 0,
+    category: 'Technology',
+    difficulty: 'hard'
+  },
 
   // Math - Hard
   {
@@ -520,6 +1044,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     category: 'Math',
     difficulty: 'hard'
   },
+  {
+    id: '161',
+    question: 'What is the sum of the angles in a triangle?',
+    type: 'multiple-choice',
+    options: ['90 degrees', '180 degrees', '270 degrees', '360 degrees'],
+    correctAnswer: 1,
+    category: 'Math',
+    difficulty: 'hard'
+  },
+  {
+    id: '162',
+    question: 'What is the quadratic formula?',
+    type: 'type-answer',
+    correctAnswer: 'x = (-b ± √(b²-4ac)) / 2a',
+    category: 'Math',
+    difficulty: 'hard'
+  },
+  {
+    id: '163',
+    question: 'What is the name of a polygon with 8 sides?',
+    type: 'multiple-choice',
+    options: ['Hexagon', 'Heptagon', 'Octagon', 'Nonagon'],
+    correctAnswer: 2,
+    category: 'Math',
+    difficulty: 'hard'
+  },
+  {
+    id: '164',
+    question: 'What is the factorial of 5?',
+    type: 'type-answer',
+    correctAnswer: '120',
+    category: 'Math',
+    difficulty: 'hard'
+  },
+  {
+    id: '165',
+    question: 'What is the Pythagorean theorem?',
+    type: 'multiple-choice',
+    options: ['a² + b² = c²', 'a + b = c', 'a² - b² = c²', 'a × b = c'],
+    correctAnswer: 0,
+    category: 'Math',
+    difficulty: 'hard'
+  },
 
   // Philosophy - Hard
   {
@@ -536,6 +1103,32 @@ export const triviaQuestions: TriviaQuestion[] = [
     question: 'What is the philosophical study of knowledge called?',
     type: 'type-answer',
     correctAnswer: 'epistemology',
+    category: 'Philosophy',
+    difficulty: 'hard'
+  },
+  {
+    id: '166',
+    question: 'Who said "I think, therefore I am"?',
+    type: 'multiple-choice',
+    options: ['Kant', 'Descartes', 'Hume', 'Locke'],
+    correctAnswer: 1,
+    category: 'Philosophy',
+    difficulty: 'hard'
+  },
+  {
+    id: '167',
+    question: 'What is the study of ethics called?',
+    type: 'type-answer',
+    correctAnswer: 'moral philosophy',
+    category: 'Philosophy',
+    difficulty: 'hard'
+  },
+  {
+    id: '168',
+    question: 'Who wrote "Thus Spoke Zarathustra"?',
+    type: 'multiple-choice',
+    options: ['Kant', 'Hegel', 'Nietzsche', 'Schopenhauer'],
+    correctAnswer: 2,
     category: 'Philosophy',
     difficulty: 'hard'
   },
@@ -567,6 +1160,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     category: 'Music',
     difficulty: 'hard'
   },
+  {
+    id: '169',
+    question: 'How many keys are on a standard piano?',
+    type: 'multiple-choice',
+    options: ['76', '88', '96', '104'],
+    correctAnswer: 1,
+    category: 'Music',
+    difficulty: 'medium'
+  },
+  {
+    id: '170',
+    question: 'Who composed "Moonlight Sonata"?',
+    type: 'type-answer',
+    correctAnswer: 'beethoven',
+    category: 'Music',
+    difficulty: 'hard'
+  },
+  {
+    id: '171',
+    question: 'What instrument does Yo-Yo Ma famously play?',
+    type: 'multiple-choice',
+    options: ['Violin', 'Cello', 'Piano', 'Flute'],
+    correctAnswer: 1,
+    category: 'Music',
+    difficulty: 'medium'
+  },
+  {
+    id: '172',
+    question: 'How many beats are in a whole note?',
+    type: 'type-answer',
+    correctAnswer: '4',
+    category: 'Music',
+    difficulty: 'easy'
+  },
+  {
+    id: '173',
+    question: 'What does "piano" mean in musical terms?',
+    type: 'multiple-choice',
+    options: ['Fast', 'Slow', 'Loud', 'Soft'],
+    correctAnswer: 3,
+    category: 'Music',
+    difficulty: 'hard'
+  },
 
   // Movies - Various Difficulties
   {
@@ -595,6 +1231,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     category: 'Movies',
     difficulty: 'hard'
   },
+  {
+    id: '174',
+    question: 'Who played the main character in "Forrest Gump"?',
+    type: 'multiple-choice',
+    options: ['Tom Cruise', 'Tom Hanks', 'Brad Pitt', 'Leonardo DiCaprio'],
+    correctAnswer: 1,
+    category: 'Movies',
+    difficulty: 'easy'
+  },
+  {
+    id: '175',
+    question: 'Which movie features the song "My Heart Will Go On"?',
+    type: 'type-answer',
+    correctAnswer: 'titanic',
+    category: 'Movies',
+    difficulty: 'medium'
+  },
+  {
+    id: '176',
+    question: 'Who directed "The Godfather"?',
+    type: 'multiple-choice',
+    options: ['Martin Scorsese', 'Francis Ford Coppola', 'Steven Spielberg', 'George Lucas'],
+    correctAnswer: 1,
+    category: 'Movies',
+    difficulty: 'hard'
+  },
+  {
+    id: '177',
+    question: 'In which movie does the character say "I\'ll be back"?',
+    type: 'type-answer',
+    correctAnswer: 'terminator',
+    category: 'Movies',
+    difficulty: 'easy'
+  },
+  {
+    id: '178',
+    question: 'Which animated movie features the song "Let It Go"?',
+    type: 'multiple-choice',
+    options: ['Moana', 'Frozen', 'Tangled', 'The Little Mermaid'],
+    correctAnswer: 1,
+    category: 'Movies',
+    difficulty: 'medium'
+  },
 
   // Food & Cooking - Various Difficulties
   {
@@ -621,6 +1300,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     correctAnswer: 'mise en place',
     category: 'Food',
     difficulty: 'hard'
+  },
+  {
+    id: '179',
+    question: 'What type of pastry is used to make profiteroles?',
+    type: 'multiple-choice',
+    options: ['Puff pastry', 'Choux pastry', 'Filo pastry', 'Shortcrust pastry'],
+    correctAnswer: 1,
+    category: 'Food',
+    difficulty: 'hard'
+  },
+  {
+    id: '180',
+    question: 'Which fruit is known as the "king of fruits"?',
+    type: 'type-answer',
+    correctAnswer: 'durian',
+    category: 'Food',
+    difficulty: 'medium'
+  },
+  {
+    id: '181',
+    question: 'What is the main ingredient in hummus?',
+    type: 'multiple-choice',
+    options: ['Lentils', 'Chickpeas', 'Black beans', 'Kidney beans'],
+    correctAnswer: 1,
+    category: 'Food',
+    difficulty: 'easy'
+  },
+  {
+    id: '182',
+    question: 'Which country is famous for inventing pizza?',
+    type: 'type-answer',
+    correctAnswer: 'italy',
+    category: 'Food',
+    difficulty: 'easy'
+  },
+  {
+    id: '183',
+    question: 'What is the hottest part of a chili pepper?',
+    type: 'multiple-choice',
+    options: ['The skin', 'The seeds', 'The flesh', 'The stem'],
+    correctAnswer: 1,
+    category: 'Food',
+    difficulty: 'medium'
   },
 
   // Animals - Various Difficulties
@@ -650,6 +1372,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     category: 'Animals',
     difficulty: 'hard'
   },
+  {
+    id: '184',
+    question: 'Which animal is known as the "Ship of the Desert"?',
+    type: 'multiple-choice',
+    options: ['Horse', 'Camel', 'Elephant', 'Donkey'],
+    correctAnswer: 1,
+    category: 'Animals',
+    difficulty: 'easy'
+  },
+  {
+    id: '185',
+    question: 'How many legs does a lobster have?',
+    type: 'type-answer',
+    correctAnswer: '10',
+    category: 'Animals',
+    difficulty: 'medium'
+  },
+  {
+    id: '186',
+    question: 'Which bird is known for its ability to mimic human speech?',
+    type: 'multiple-choice',
+    options: ['Eagle', 'Parrot', 'Owl', 'Hawk'],
+    correctAnswer: 1,
+    category: 'Animals',
+    difficulty: 'easy'
+  },
+  {
+    id: '187',
+    question: 'What is the fastest land animal?',
+    type: 'type-answer',
+    correctAnswer: 'cheetah',
+    category: 'Animals',
+    difficulty: 'easy'
+  },
+  {
+    id: '188',
+    question: 'Which animal has the longest lifespan?',
+    type: 'multiple-choice',
+    options: ['Elephant', 'Tortoise', 'Whale', 'Parrot'],
+    correctAnswer: 1,
+    category: 'Animals',
+    difficulty: 'medium'
+  },
 
   // Space - Various Difficulties
   {
@@ -677,6 +1442,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     category: 'Space',
     difficulty: 'hard'
   },
+  {
+    id: '189',
+    question: 'Which planet has the most rings?',
+    type: 'multiple-choice',
+    options: ['Jupiter', 'Saturn', 'Uranus', 'Neptune'],
+    correctAnswer: 1,
+    category: 'Space',
+    difficulty: 'medium'
+  },
+  {
+    id: '190',
+    question: 'What is the name of our galaxy?',
+    type: 'type-answer',
+    correctAnswer: 'milky way',
+    category: 'Space',
+    difficulty: 'easy'
+  },
+  {
+    id: '191',
+    question: 'Which planet is the hottest in our solar system?',
+    type: 'multiple-choice',
+    options: ['Mercury', 'Venus', 'Mars', 'Jupiter'],
+    correctAnswer: 1,
+    category: 'Space',
+    difficulty: 'medium'
+  },
+  {
+    id: '192',
+    question: 'What is the name of the first artificial satellite?',
+    type: 'type-answer',
+    correctAnswer: 'sputnik',
+    category: 'Space',
+    difficulty: 'hard'
+  },
+  {
+    id: '193',
+    question: 'How long does it take for light from the Sun to reach Earth?',
+    type: 'multiple-choice',
+    options: ['8 minutes', '8 hours', '8 days', '8 seconds'],
+    correctAnswer: 0,
+    category: 'Space',
+    difficulty: 'medium'
+  },
 
   // Mythology - Various Difficulties
   {
@@ -701,6 +1509,49 @@ export const triviaQuestions: TriviaQuestion[] = [
     question: 'In Egyptian mythology, who is the god of the afterlife?',
     type: 'type-answer',
     correctAnswer: 'osiris',
+    category: 'Mythology',
+    difficulty: 'hard'
+  },
+  {
+    id: '194',
+    question: 'Who is the Greek goddess of wisdom?',
+    type: 'multiple-choice',
+    options: ['Hera', 'Athena', 'Aphrodite', 'Artemis'],
+    correctAnswer: 1,
+    category: 'Mythology',
+    difficulty: 'easy'
+  },
+  {
+    id: '195',
+    question: 'In Roman mythology, who is the god of war?',
+    type: 'type-answer',
+    correctAnswer: 'mars',
+    category: 'Mythology',
+    difficulty: 'medium'
+  },
+  {
+    id: '196',
+    question: 'What creature has the head of a lion, body of a goat, and tail of a serpent?',
+    type: 'multiple-choice',
+    options: ['Griffin', 'Chimera', 'Sphinx', 'Manticore'],
+    correctAnswer: 1,
+    category: 'Mythology',
+    difficulty: 'hard'
+  },
+  {
+    id: '197',
+    question: 'Who opened the box that released all evils into the world?',
+    type: 'type-answer',
+    correctAnswer: 'pandora',
+    category: 'Mythology',
+    difficulty: 'medium'
+  },
+  {
+    id: '198',
+    question: 'In Norse mythology, what is the name of the world tree?',
+    type: 'multiple-choice',
+    options: ['Yggdrasil', 'Bifrost', 'Asgard', 'Midgard'],
+    correctAnswer: 0,
     category: 'Mythology',
     difficulty: 'hard'
   },
@@ -730,6 +1581,23 @@ export const triviaQuestions: TriviaQuestion[] = [
     correctAnswer: 'mandarin',
     category: 'Language',
     difficulty: 'hard'
+  },
+  {
+    id: '199',
+    question: 'How do you say "thank you" in French?',
+    type: 'multiple-choice',
+    options: ['Bonjour', 'Merci', 'Au revoir', 'Excusez-moi'],
+    correctAnswer: 1,
+    category: 'Language',
+    difficulty: 'easy'
+  },
+  {
+    id: '200',
+    question: 'What does "sayonara" mean in Japanese?',
+    type: 'type-answer',
+    correctAnswer: 'goodbye',
+    category: 'Language',
+    difficulty: 'medium'
   }
 ];
 
@@ -745,18 +1613,9 @@ export const getRandomQuestion = (difficulty?: 'easy' | 'medium' | 'hard'): Triv
 };
 
 export const getQuestionByZone = (zone: number): TriviaQuestion => {
-  // Easy questions for zones 1-3
-  if (zone <= 3) {
-    return getRandomQuestion('easy');
-  }
-  // Medium questions for zones 4-7
-  else if (zone <= 7) {
-    return getRandomQuestion('medium');
-  }
-  // Hard questions for zones 8+
-  else {
-    return getRandomQuestion('hard');
-  }
+  // Now returns completely random questions regardless of zone
+  const randomIndex = Math.floor(Math.random() * triviaQuestions.length);
+  return triviaQuestions[randomIndex];
 };
 
 export const checkAnswer = (question: TriviaQuestion, userAnswer: string | number): boolean => {
