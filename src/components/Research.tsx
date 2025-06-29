@@ -79,11 +79,11 @@ export const Research: React.FC<ResearchProps> = ({
           return (
             <div
               key={type.key}
-              className={`group bg-gradient-to-br ${type.bgGradient} backdrop-blur-sm p-2 sm:p-4 lg:p-6 rounded-2xl border-2 ${type.borderColor} hover:scale-105 transition-all duration-300 shadow-lg`}
+              className={`bg-gradient-to-br ${type.bgGradient} backdrop-blur-sm p-2 sm:p-4 lg:p-6 rounded-2xl border-2 ${type.borderColor} transition-all duration-300 shadow-lg`}
             >
               <div className="text-center mb-3 sm:mb-4 lg:mb-6">
                 <div className="relative mb-2 sm:mb-3 lg:mb-4">
-                  <Icon className={`w-8 h-8 sm:w-12 sm:h-12 lg:w-16 lg:h-16 mx-auto ${type.color} group-hover:animate-pulse`} />
+                  <Icon className={`w-8 h-8 sm:w-12 sm:h-12 lg:w-16 lg:h-16 mx-auto ${type.color}`} />
                   <div className="absolute inset-0 animate-ping opacity-20">
                     <Icon className={`w-8 h-8 sm:w-12 sm:h-12 lg:w-16 lg:h-16 mx-auto ${type.color}`} />
                   </div>
@@ -141,7 +141,7 @@ export const Research: React.FC<ResearchProps> = ({
                   disabled={coins < cost}
                   className={`w-full py-2 sm:py-3 lg:py-4 rounded-xl font-bold transition-all duration-300 text-xs sm:text-sm lg:text-base ${
                     coins >= cost
-                      ? `bg-gradient-to-r ${type.buttonGradient} text-white hover:scale-105 shadow-lg backdrop-blur-sm border border-white/20`
+                      ? `bg-gradient-to-r ${type.buttonGradient} text-white shadow-lg backdrop-blur-sm border border-white/20`
                       : 'bg-gray-600/50 backdrop-blur-sm text-gray-400 cursor-not-allowed border border-gray-600/30'
                   }`}
                 >
