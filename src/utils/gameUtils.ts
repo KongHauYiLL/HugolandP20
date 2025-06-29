@@ -277,7 +277,7 @@ export const getRarityBorder = (rarity: string): string => {
     case 'rare': return 'border-blue-400';
     case 'epic': return 'border-purple-400';
     case 'legendary': return 'border-yellow-400';
-    case 'mythical': return 'border-red-600';
+    case 'mythical':  return 'border-red-600';
     default: return 'border-gray-400';
   }
 };
@@ -299,21 +299,6 @@ export const calculateResearchBonus = (level: number): number => {
 
 export const calculateResearchCost = (level: number): number => {
   return 100 + (level * 25); // Increasing cost
-};
-
-export const canRepairWithAnvil = (item1: Weapon | Armor, item2: Weapon | Armor): boolean => {
-  return item1.name === item2.name && 
-         item1.rarity === item2.rarity && 
-         item1.id !== item2.id;
-};
-
-export const repairWithAnvil = (item1: Weapon | Armor, item2: Weapon | Armor): Weapon | Armor => {
-  const repairedItem = { ...item1 };
-  repairedItem.durability = Math.min(
-    repairedItem.maxDurability,
-    item1.durability + item2.durability
-  );
-  return repairedItem;
 };
 
 export const getRepairCost = (item: Weapon | Armor): number => {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Inventory as InventoryType, Weapon, Armor, RelicItem } from '../types/game';
-import { Sword, Shield, Gem, Star, Coins, Sparkles, Wrench, Package, Hammer, Book } from 'lucide-react';
-import { getRarityColor, getRarityBorder, getRarityGlow, getRepairCost, canRepairWithAnvil, repairWithAnvil } from '../utils/gameUtils';
+import { Sword, Shield, Gem, Star, Coins, Sparkles, Package, Book } from 'lucide-react';
+import { getRarityColor, getRarityBorder, getRarityGlow } from '../utils/gameUtils';
 
 interface InventoryProps {
   inventory: InventoryType;
@@ -12,7 +12,6 @@ interface InventoryProps {
   onUpgradeArmor: (armorId: string) => void;
   onSellWeapon: (weaponId: string) => void;
   onSellArmor: (armorId: string) => void;
-  onRepairWithAnvil: (item1Id: string, item2Id: string, type: 'weapon' | 'armor') => void;
   onUpgradeRelic: (relicId: string) => void;
   onEquipRelic: (relicId: string) => void;
   onUnequipRelic: (relicId: string) => void;
@@ -29,7 +28,6 @@ export const Inventory: React.FC<InventoryProps> = ({
   onUpgradeArmor,
   onSellWeapon,
   onSellArmor,
-  onRepairWithAnvil,
   onUpgradeRelic,
   onEquipRelic,
   onUnequipRelic,
@@ -37,7 +35,6 @@ export const Inventory: React.FC<InventoryProps> = ({
   onOpenYojefMarket,
 }) => {
   const [activeTab, setActiveTab] = useState<'weapons' | 'armor' | 'relics'>('weapons');
-  const [selectedForAnvil, setSelectedForAnvil] = useState<{ item1?: Weapon | Armor; item2?: Weapon | Armor; type?: 'weapon' | 'armor' }>({});
 
   const getDurabilityColor = (durability: number, maxDurability: number) => {
     const percentage = durability / maxDurability;
@@ -51,13 +48,6 @@ export const Inventory: React.FC<InventoryProps> = ({
     if (percentage > 0.7) return 'bg-green-500';
     if (percentage > 0.3) return 'bg-yellow-500';
     return 'bg-red-500';
-  };
-
-  const handleAnvilRepair = () => {
-    if (selectedForAnvil.item1 && selectedForAnvil.item2 && selectedForAnvil.type) {
-      onRepairWithAnvil(selectedForAnvil.item1.id, selectedForAnvil.item2.id, selectedForAnvil.type);
-      setSelectedForAnvil({});
-    }
   };
 
   const renderEquippedSection = () => (
@@ -153,9 +143,7 @@ export const Inventory: React.FC<InventoryProps> = ({
       {items.map((item) => (
         <div 
           key={item.id} 
-          className={`bg-black/40 p-3 sm:p-4 rounded-lg border-2 ${getRarityBorder(item.rarity)} ${getRarityGlow(item.rarity)} ${item.isChroma ? 'animate-pulse' : ''} ${
-            selectedForAnvil.item1?.id === item.id || selectedForAnvil.item2?.id === item.id ? 'ring-2 ring-yellow-400' : ''
-          }`}
+          className={`bg-black/40 p-3 sm:p-4 rounded-lg border-2 ${getRarityBorder(item.rarity)} ${getRarityGlow(item.rarity)} ${item.isChroma ? 'animate-pulse' : ''}`}
         >
           <div className="flex justify-between items-start mb-3">
             <div className="flex-1 min-w-0">
@@ -240,23 +228,6 @@ export const Inventory: React.FC<InventoryProps> = ({
                 Sell
               </button>
             </div>
-
-            {/* Anvil button only */}
-            <button
-              onClick={() => {
-                if (!selectedForAnvil.item1) {
-                  setSelectedForAnvil({ item1: item, type });
-                } else if (!selectedForAnvil.item2 && selectedForAnvil.item1.id !== item.id) {
-                  setSelectedForAnvil({ ...selectedForAnvil, item2: item });
-                } else {
-                  setSelectedForAnvil({});
-                }
-              }}
-              className="w-full px-2 py-1 text-xs rounded font-semibold bg-yellow-600 text-white hover:bg-yellow-500 transition-all flex items-center gap-1 justify-center"
-            >
-              <Hammer className="w-3 h-3" />
-              Anvil
-            </button>
           </div>
         </div>
       ))}
@@ -377,46 +348,6 @@ export const Inventory: React.FC<InventoryProps> = ({
       {/* Currently Equipped */}
       {renderEquippedSection()}
 
-      {/* Anvil Section */}
-      {(selectedForAnvil.item1 || selectedForAnvil.item2) && (
-        <div className="bg-yellow-900/30 p-4 rounded-lg border border-yellow-500/50 mb-4">
-          <h3 className="text-yellow-400 font-bold mb-3 flex items-center gap-2">
-            <Hammer className="w-5 h-5" />
-            Anvil Repair
-          </h3>
-          <div className="space-y-2">
-            <p className="text-white text-sm">
-              Selected: {selectedForAnvil.item1?.name || 'None'} 
-              {selectedForAnvil.item2 && ` + ${selectedForAnvil.item2.name}`}
-            </p>
-            {selectedForAnvil.item1 && selectedForAnvil.item2 && (
-              <div className="flex gap-2">
-                <button
-                  onClick={handleAnvilRepair}
-                  disabled={!canRepairWithAnvil(selectedForAnvil.item1, selectedForAnvil.item2)}
-                  className={`px-4 py-2 rounded font-semibold text-sm ${
-                    canRepairWithAnvil(selectedForAnvil.item1, selectedForAnvil.item2)
-                      ? 'bg-yellow-600 text-white hover:bg-yellow-500'
-                      : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  Repair with Anvil
-                </button>
-                <button
-                  onClick={() => setSelectedForAnvil({})}
-                  className="px-4 py-2 rounded font-semibold text-sm bg-gray-600 text-white hover:bg-gray-500"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
-            <p className="text-yellow-300 text-xs">
-              Select two identical items to repair the first one using the second.
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Tab Navigation */}
       <div className="flex gap-2 mb-4">
         {[
@@ -509,12 +440,12 @@ export const Inventory: React.FC<InventoryProps> = ({
       <div className="mt-6 text-center">
         <div className="bg-black/30 p-3 rounded-lg">
           <p className="text-xs sm:text-sm text-gray-300 mb-2">
-            💡 <strong>New Features:</strong>
+            💡 <strong>Features:</strong>
           </p>
           <div className="text-xs text-gray-400 space-y-1">
-            <p>• <strong>Anvil:</strong> Repair items by merging two identical items</p>
             <p>• <strong>Enchanted Items:</strong> 5% chance from chests, double ATK/DEF</p>
-            <p>• <strong>Relics:</strong> Powerful ancient items from the Yojef Market (max 5 equipped) - Now 1.5x stronger!</p>
+            <p>• <strong>Relics:</strong> Powerful ancient items from the Yojef Market (max 5 equipped) - 1.5x stronger!</p>
+            <p>• <strong>Durability:</strong> Items lose durability in combat and become less effective</p>
           </div>
         </div>
       </div>

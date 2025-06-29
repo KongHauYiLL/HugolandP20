@@ -47,7 +47,6 @@ function App() {
     mineGem,
     exchangeShinyGems,
     discardItem,
-    repairWithAnvil,
     purchaseRelic,
     upgradeRelic,
     equipRelic,
@@ -296,7 +295,6 @@ function App() {
             onUpgradeArmor={upgradeArmor}
             onSellWeapon={sellWeapon}
             onSellArmor={sellArmor}
-            onRepairWithAnvil={repairWithAnvil}
             onUpgradeRelic={upgradeRelic}
             onEquipRelic={equipRelic}
             onUnequipRelic={unequipRelic}
